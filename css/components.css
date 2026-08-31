@@ -1,0 +1,336 @@
+/**
+ * @file components.css
+ * @description 彈窗、成績單面板、證書勳章、歷史紀錄抽屜與提示樣式
+ */
+
+/* 彈窗遮罩與外框 */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(20, 15, 10, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 成績單卡片 */
+.report-modal-card {
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  max-width: 640px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* 成績單標頭 */
+.report-header {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.report-header.status-passed {
+  background: linear-gradient(135deg, var(--bg-correct), var(--bg-surface));
+  border-bottom-color: var(--color-correct);
+}
+
+.report-header.status-failed {
+  background: linear-gradient(135deg, var(--bg-wrong), var(--bg-surface));
+  border-bottom-color: var(--color-wrong);
+}
+
+.report-cert-icon {
+  font-size: 2.5rem;
+  background: var(--bg-card);
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.report-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 0.2rem;
+}
+
+.report-summary-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.report-next-goal {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+/* 核心三項數據網格 */
+.report-body {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.report-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.stat-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem;
+  margin: 0.3rem 0;
+}
+
+.score-number {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.score-total, .score-unit {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+.stat-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* 分科細項列表 */
+.report-subjects-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  color: var(--text-main);
+}
+
+.report-subject-row {
+  margin-bottom: 0.85rem;
+}
+
+.report-subject-row:last-child {
+  margin-bottom: 0;
+}
+
+.subj-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.progress-bar-bg {
+  height: 8px;
+  background: var(--bg-app);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--secondary), var(--primary));
+  border-radius: 4px;
+  transition: width 0.6s ease-out;
+}
+
+.subj-sub-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* 成績單底部按鈕區 */
+.report-footer {
+  padding: 1rem 1.5rem;
+  background: var(--bg-app);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* 歷史紀錄彈窗 */
+.history-modal-card {
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-icon-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.history-list-container {
+  padding: 1rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.history-item-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hist-title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.hist-level {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.hist-type-badge {
+  background: var(--bg-app);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.hist-pass-badge {
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.tag-passed {
+  background: var(--bg-correct);
+  color: var(--color-correct);
+}
+
+.tag-failed {
+  background: var(--bg-wrong);
+  color: var(--color-wrong);
+}
+
+.hist-date {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+}
+
+.hist-col-stats {
+  text-align: right;
+}
+
+.hist-score {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+.hist-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.modal-card-footer {
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-app);
+}
+
+.empty-history {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}

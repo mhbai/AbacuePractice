@@ -1,0 +1,449 @@
+/**
+ * @file exam.css
+ * @description 試卷實體排版、縱列加減算、橫式乘除算、硃筆批改標記與列印樣式
+ */
+
+/* 實體試卷卡片 */
+.exam-sheet {
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  padding: 1.75rem 2rem;
+  box-shadow: var(--shadow-paper);
+  position: relative;
+}
+
+/* 試卷標頭 */
+.exam-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--text-main);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.exam-org-title {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  letter-spacing: 4px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 0.2rem;
+}
+
+.exam-org-subtitle {
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.exam-test-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.exam-meta-info {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.exam-tag {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* 初審複審成績章印區 */
+.exam-stamp-box {
+  width: 140px;
+}
+
+.stamp-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid var(--text-main);
+  text-align: center;
+  font-size: 0.85rem;
+  background: var(--bg-card);
+}
+
+.stamp-table th, .stamp-table td {
+  border: 1px solid var(--text-main);
+  padding: 0.25rem;
+}
+
+.stamp-table thead tr:first-child th {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.stamp-score {
+  height: 48px;
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-wrong); /* 老師硃筆紅 */
+}
+
+/* 科目切換頁籤 */
+.subject-tabs-nav {
+  display: flex;
+  gap: 0.4rem;
+  border-bottom: 2px solid var(--border-dark);
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 1px;
+}
+
+.subj-tab-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.subj-tab-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-app);
+}
+
+.subj-tab-btn.active {
+  background: var(--bg-surface);
+  color: var(--primary);
+  border-color: var(--border-dark);
+  border-bottom: 2px solid var(--bg-surface);
+  margin-bottom: -2px;
+  font-weight: 700;
+}
+
+.tab-progress-badge {
+  background: var(--bg-app);
+  border: 1px solid var(--border-color);
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+.tab-score-badge {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* 科目區塊 */
+.subject-section {
+  margin-bottom: 2.5rem;
+}
+
+.subject-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.subject-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.subject-rules-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.note-badge {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------
+   加減算 (直式縱列表格)
+   ------------------------------------------------------------- */
+.addsub-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.addsub-group-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dark);
+  overflow-x: auto;
+}
+
+.addsub-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.addsub-table th, .addsub-table td {
+  border: 1px solid var(--border-color);
+  padding: 0.35rem 0.6rem;
+}
+
+.header-qno-row th {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.col-header-label {
+  width: 45px;
+  background-color: var(--bg-surface) !important;
+}
+
+.row-index {
+  text-align: center;
+  color: var(--text-subtle);
+  font-size: 0.8rem;
+  background-color: var(--bg-surface);
+}
+
+.num-cell {
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.num-cell.is-negative {
+  color: var(--color-wrong);
+}
+
+.row-answer-input td {
+  background-color: var(--bg-app);
+  border-top: 2px solid var(--text-main);
+  border-bottom: 2px solid var(--text-main);
+}
+
+.row-ans-label {
+  text-align: center;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.row-stamp-row td {
+  height: 28px;
+  background-color: var(--bg-card);
+}
+
+.row-stamp-label {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+}
+
+/* 答案輸入框通用樣式 */
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.currency-sign {
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 0.2rem;
+  font-family: var(--font-mono);
+}
+
+.quiz-answer-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: right;
+  transition: all var(--transition-fast);
+}
+
+.quiz-answer-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+  background-color: #ffffff;
+}
+
+/* 批改狀態標記 */
+.ans-cell.ans-correct .quiz-answer-input,
+.arithmetic-row.ans-correct .quiz-answer-input {
+  border-color: var(--color-correct);
+  background-color: var(--bg-correct);
+  color: var(--color-correct);
+}
+
+.ans-cell.ans-incorrect .quiz-answer-input,
+.arithmetic-row.ans-incorrect .quiz-answer-input {
+  border-color: var(--color-wrong);
+  background-color: var(--bg-wrong);
+  color: var(--color-wrong);
+  text-decoration: line-through;
+}
+
+.grade-indicator {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  font-weight: 700;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.indicator-correct {
+  color: var(--color-correct);
+  font-size: 1.1rem;
+}
+
+.indicator-wrong {
+  color: var(--color-wrong);
+  right: -5px;
+  top: -24px;
+  transform: none;
+  background: var(--bg-card);
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--color-wrong);
+  border-radius: 3px;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.standard-ans {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--color-wrong);
+}
+
+/* -------------------------------------------------------------
+   乘算與除算 (雙欄/四欄表格排版)
+   ------------------------------------------------------------- */
+.arithmetic-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.arithmetic-grid.cols-2 {
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+}
+
+.arithmetic-column-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dark);
+}
+
+.arithmetic-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.arithmetic-table th, .arithmetic-table td {
+  border: 1px solid var(--border-color);
+  padding: 0.4rem 0.5rem;
+}
+
+.arithmetic-table thead th {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.th-no { width: 42px; }
+.th-expr { text-align: left; }
+.th-ans { width: 140px; }
+.th-audit { width: 36px; }
+
+.td-no {
+  text-align: center;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.td-expr {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.td-audit {
+  background: var(--bg-surface);
+}
+
+/* -------------------------------------------------------------
+   列印模式 (A4 列印優化)
+   ------------------------------------------------------------- */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .app-navbar, .quiz-control-bar, .shortcut-bar, .subject-tabs-nav, .modal-backdrop {
+    display: none !important;
+  }
+  .main-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .exam-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .quiz-answer-input {
+    border: 1px solid #000000 !important;
+    background: transparent !important;
+  }
+}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="paper">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>珠算與心算線上模擬測驗與自動評分平台</title>
+  
+  <!-- 引入樣式表 -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/exam.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <!-- 頂部應用導航列 -->
+  <nav class="app-navbar">
+    <div class="brand-section">
+      <div class="brand-logo">🧮</div>
+      <div class="brand-text">
+        <h1>珠心算模擬測驗與評分系統</h1>
+        <p>Abacus & Mental Math Simulation Platform</p>
+      </div>
+    </div>
+    <div class="nav-controls">
+      <button class="btn btn-secondary" id="btn-open-history" title="查看歷史測驗紀錄">
+        📜 歷史紀錄
+      </button>
+      <button class="btn btn-icon" id="btn-toggle-sound" title="切換音效開關">
+        🔊
+      </button>
+      <button class="btn btn-icon" id="btn-toggle-theme" title="切換主題 (試卷/深色/淺色)">
+        🎨
+      </button>
+    </div>
+  </nav>
+
+  <!-- 測驗設定與計時控制列 -->
+  <section class="quiz-control-bar">
+    <div class="selector-group">
+      <div class="select-wrapper">
+        <label for="select-exam-type">測驗項目：</label>
+        <select id="select-exam-type" class="styled-select">
+          <option value="MENTAL">🧠 心算測驗 (限時 3 分鐘)</option>
+          <option value="ABACUS">🧮 珠算測驗 (限時 10 分鐘)</option>
+        </select>
+      </div>
+
+      <div class="select-wrapper">
+        <label for="select-level">報考級別：</label>
+        <select id="select-level" class="styled-select">
+          <!-- 動態由 JavaScript 載入 -->
+        </select>
+      </div>
+
+      <button id="btn-start-exam" class="btn btn-primary">
+        ▶ 開始測驗
+      </button>
+    </div>
+
+    <div class="timer-action-group">
+      <div class="timer-box" id="timer-display" title="剩餘作答時間">
+        ⏱️ <span id="timer-digits">03:00</span>
+      </div>
+
+      <button id="btn-submit-exam" class="btn btn-success" disabled>
+        ✓ 立即交卷評分
+      </button>
+    </div>
+  </section>
+
+  <!-- 鍵盤快捷鍵說明列 -->
+  <main class="main-container">
+    <div class="shortcut-bar">
+      <div class="shortcut-items">
+        <span><kbd>Enter</kbd> / <kbd>Tab</kbd> 下一題</span>
+        <span><kbd>Shift</kbd>+<kbd>Enter</kbd> 上一題</span>
+        <span><kbd>↑</kbd> <kbd>↓</kbd> 上下題</span>
+        <span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> 快速交卷</span>
+      </div>
+      <div class="paper-rules-text" id="paper-rules-summary">
+        累計總和非負約束 • 逆向整除演算 • 珠算名數至分位
+      </div>
+    </div>
+
+    <!-- 試卷主內容渲染區 -->
+    <div id="exam-paper-container">
+      <!-- 試卷將由 renderer.js 動態注入 -->
+    </div>
+  </main>
+
+  <!-- 彈窗掛載容器 -->
+  <div id="modal-mount-point"></div>
+
+  <!-- JavaScript 進入點 (ES Modules) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
