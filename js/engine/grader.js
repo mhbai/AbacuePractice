@@ -65,6 +65,31 @@ export function compareAnswer(userInput, standardAnswer, toleranceDecimals = 5) 
 }
 
 /**
+ * 單題即時批改 (支援即填即審)
+ * @param {object} question - 題目物件
+ * @param {string|number} userAnswer - 使用者輸入答案
+ * @returns {{ isAnswered: boolean, isCorrect: boolean, userRaw: string, standardAnswer: number, answerFormatted: string, pointsEarned: number }}
+ */
+export function gradeSingleQuestion(question, userAnswer) {
+  if (!question) {
+    return { isAnswered: false, isCorrect: false, userRaw: '', standardAnswer: 0, answerFormatted: '', pointsEarned: 0 };
+  }
+  const norm = normalizeUserAnswer(userAnswer);
+  const isAnswered = norm.valid || String(userAnswer || '').trim() !== '';
+  const tolerance = question.decimalPlaces !== undefined ? question.decimalPlaces : (question.roundingDecimals || 5);
+  const isCorrect = isAnswered ? compareAnswer(userAnswer, question.standardAnswer, tolerance) : false;
+
+  return {
+    isAnswered,
+    isCorrect,
+    userRaw: String(userAnswer || ''),
+    standardAnswer: question.standardAnswer,
+    answerFormatted: question.answerFormatted || String(question.standardAnswer),
+    pointsEarned: isCorrect ? (question.points || 10) : 0
+  };
+}
+
+/**
  * 判定段位等級
  * @param {number} totalScore
  * @param {Array<{score: number, rank: string}>} danRankScale

@@ -12,6 +12,7 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_SETTINGS = {
+  gradingMode: 'ON_SUBMIT', // 'ON_SUBMIT' (交卷後統一批改) | 'INSTANT' (即填即審)
   soundEnabled: true,
   theme: 'paper', // 'paper' | 'dark' | 'light'
   largeFont: false,

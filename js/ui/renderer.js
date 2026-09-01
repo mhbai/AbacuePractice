@@ -25,13 +25,14 @@ export class ExamRenderer {
 
     const { examType, levelName, timeLimitSeconds, subjects } = examPaper;
     const isGraded = !!gradedResult;
+    const isInstant = !!(gradedResult && gradedResult.isInstant);
 
     const isMental = examType === 'MENTAL';
     const mainTitle = isMental ? '心 算 測 試' : '珠 算 測 試';
     const mainSubtitle = isMental ? 'MENTAL CALCULATION EXAMINATION' : 'ABACUS CALCULATION EXAMINATION';
 
     let html = `
-      <div class="exam-sheet ${isGraded ? 'is-graded-sheet' : ''}">
+      <div class="exam-sheet ${isGraded && !isInstant ? 'is-graded-sheet' : ''}">
         <!-- 試卷標頭 -->
         <header class="exam-sheet-header">
           <div class="exam-header-main">
@@ -52,8 +53,8 @@ export class ExamRenderer {
               </thead>
               <tbody>
                 <tr>
-                  <td class="stamp-score">${isGraded ? gradedResult.totalEarnedScore : '&nbsp;'}</td>
-                  <td class="stamp-score">${isGraded ? gradedResult.totalEarnedScore : '&nbsp;'}</td>
+                  <td class="stamp-score">${isGraded && !isInstant ? gradedResult.totalEarnedScore : '&nbsp;'}</td>
+                  <td class="stamp-score">${isGraded && !isInstant ? gradedResult.totalEarnedScore : '&nbsp;'}</td>
                 </tr>
               </tbody>
             </table>
@@ -73,7 +74,7 @@ export class ExamRenderer {
       const answeredCount = Object.keys(userAnswers[sId] || {}).filter(k => String(userAnswers[sId][k]).trim() !== '').length;
 
       let scoreBadge = '';
-      if (isGraded && gradedResult.subjects[sId]) {
+      if (isGraded && !isInstant && gradedResult.subjects[sId]) {
         scoreBadge = `<span class="tab-score-badge">${gradedResult.subjects[sId].earnedPoints}/${sData.totalPoints}分</span>`;
       } else {
         scoreBadge = `<span class="tab-progress-badge">${answeredCount}/${count}</span>`;
@@ -93,7 +94,7 @@ export class ExamRenderer {
       const isVisible = (activeSubjectId === 'ALL' || !activeSubjectId) || (activeSubjectId === sId);
       if (!isVisible) continue;
 
-      const gradedSubject = isGraded && gradedResult.subjects[sId] ? gradedResult.subjects[sId] : null;
+      const gradedSubject = isGraded && gradedResult.subjects[sId] ? { ...gradedResult.subjects[sId], isInstant } : null;
 
       html += `
         <section class="subject-section" id="subject-section-${sId}">
@@ -187,7 +188,7 @@ export class ExamRenderer {
                     value="${userVal}"
                     placeholder="輸入"
                     autocomplete="off"
-                    ${gradedSubject ? 'readonly' : ''}
+                    ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
                   />
                   ${gradedQ ? `
                     <div class="grade-indicator ${gradedQ.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
@@ -266,7 +267,7 @@ export class ExamRenderer {
                   value="${userVal}"
                   placeholder="輸入答案"
                   autocomplete="off"
-                  ${gradedSubject ? 'readonly' : ''}
+                  ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
                 />
                 ${gradedQ ? `
                   <div class="grade-indicator ${gradedQ.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
@@ -341,7 +342,7 @@ export class ExamRenderer {
                 value="${userValRow}"
                 placeholder="橫計"
                 autocomplete="off"
-                ${gradedSubject ? 'readonly' : ''}
+                ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
               />
               ${gradedQRow ? `
                 <div class="grade-indicator ${gradedQRow.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
@@ -378,7 +379,7 @@ export class ExamRenderer {
                   value="${userValCol}"
                   placeholder="縱計"
                   autocomplete="off"
-                  ${gradedSubject ? 'readonly' : ''}
+                  ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
                 />
                 ${gradedQCol ? `
                   <div class="grade-indicator ${gradedQCol.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">

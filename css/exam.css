@@ -312,14 +312,16 @@
 
 /* 批改狀態標記 */
 .ans-cell.ans-correct .quiz-answer-input,
-.arithmetic-row.ans-correct .quiz-answer-input {
+.arithmetic-row.ans-correct .quiz-answer-input,
+.td-cross-ans.ans-correct .quiz-answer-input {
   border-color: var(--color-correct);
   background-color: var(--bg-correct);
   color: var(--color-correct);
 }
 
 .ans-cell.ans-incorrect .quiz-answer-input,
-.arithmetic-row.ans-incorrect .quiz-answer-input {
+.arithmetic-row.ans-incorrect .quiz-answer-input,
+.td-cross-ans.ans-incorrect .quiz-answer-input {
   border-color: var(--color-wrong);
   background-color: var(--bg-wrong);
   color: var(--color-wrong);

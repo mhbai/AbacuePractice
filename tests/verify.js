@@ -126,6 +126,18 @@ async function runTests() {
   }
   console.log('  ✓ 段位評定標準（初段 ~ 十段）計算完全正確！');
 
+  // 3.3 測試單題即時批改 (即填即審)
+  const qTest1 = { questionNo: 1, standardAnswer: 350, answerFormatted: '350', points: 10 };
+  const rCorrect = grader.gradeSingleQuestion(qTest1, ' 350 ');
+  const rFormatCorrect = grader.gradeSingleQuestion(qTest1, '$350.00');
+  const rWrong = grader.gradeSingleQuestion(qTest1, '351');
+  const rEmpty = grader.gradeSingleQuestion(qTest1, '');
+
+  if (!rCorrect.isCorrect || !rFormatCorrect.isCorrect || rWrong.isCorrect || rEmpty.isAnswered) {
+    throw new Error('單題即時批改邏輯異常: ' + JSON.stringify({ rCorrect, rFormatCorrect, rWrong, rEmpty }));
+  }
+  console.log('  ✓ 單題即時批改（即填即審）驗證通過！');
+
   console.log('\n=====================================================');
   console.log('🎉 所有單元與集成測試全部通過 (100% SUCCESS)！');
   console.log('=====================================================\n');

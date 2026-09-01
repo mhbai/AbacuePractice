@@ -5,9 +5,9 @@
 
 import { EXAM_TYPES, getLevelList, getLevelConfig } from './config/quizConfig.js';
 import { generateExamPaper } from './engine/mathEngine.js';
-import { gradeExamPaper } from './engine/grader.js';
+import { gradeExamPaper, gradeSingleQuestion } from './engine/grader.js';
 import { store } from './state/store.js';
-import { ExamTimer } from './ui/timer.js';
+import { ExamTimer, soundEngine } from './ui/timer.js';
 import { KeyboardNavigator } from './ui/keyboardNav.js';
 import { ExamRenderer } from './ui/renderer.js';
 import { ReportView } from './ui/reportView.js';
@@ -17,6 +17,7 @@ class AppController {
     this.dom = {
       selectExamType: document.getElementById('select-exam-type'),
       selectLevel: document.getElementById('select-level'),
+      selectGradingMode: document.getElementById('select-grading-mode'),
       btnStartExam: document.getElementById('btn-start-exam'),
       btnSubmitExam: document.getElementById('btn-submit-exam'),
       timerDigits: document.getElementById('timer-digits'),
@@ -100,6 +101,14 @@ class AppController {
       this.prepareInitialView();
     });
 
+    // 批改模式變更 (交卷後統一批改 vs 即填即審)
+    if (this.dom.selectGradingMode) {
+      this.dom.selectGradingMode.addEventListener('change', (e) => {
+        store.updateSettings({ gradingMode: e.target.value });
+        this.renderCurrentPaperView(store.getState().activeSubjectId || 'ALL');
+      });
+    }
+
     // 開始測驗按鈕
     this.dom.btnStartExam.addEventListener('click', () => {
       this.handleStartExam();
@@ -136,12 +145,14 @@ class AppController {
       document.documentElement.setAttribute('data-theme', nextTheme);
     });
 
-    // 試卷委派事件 (輸入作答與頁籤切換)
+    // 試卷委派事件 (輸入作答與即時批改、頁籤切換)
     this.dom.examContainer.addEventListener('input', (e) => {
       if (e.target.classList.contains('quiz-answer-input')) {
         const sId = e.target.getAttribute('data-subject');
         const qNo = parseInt(e.target.getAttribute('data-qno'), 10);
-        store.setAnswer(sId, qNo, e.target.value);
+        const val = e.target.value;
+        store.setAnswer(sId, qNo, val);
+        this.handleInstantGradingOnInput(e.target, sId, qNo, val);
       }
     });
 
@@ -161,7 +172,110 @@ class AppController {
     const { settings } = store.getState();
     document.documentElement.setAttribute('data-theme', settings.theme || 'paper');
     this.dom.btnToggleSound.textContent = settings.soundEnabled ? '🔊' : '🔇';
+    if (this.dom.selectGradingMode) {
+      this.dom.selectGradingMode.value = settings.gradingMode || 'ON_SUBMIT';
+    }
     this.updateDefaultTimerPreview();
+  }
+
+  /**
+   * 取得即時批改結果映射物件 (若處於即填即審模式)
+   */
+  getInstantGradedMap(paper, userAnswers) {
+    if (!paper) return null;
+    const { settings, lastReport } = store.getState();
+    if (lastReport) return lastReport;
+    if (settings.gradingMode !== 'INSTANT') return null;
+
+    const instSubjects = {};
+    for (const [sId, sData] of Object.entries(paper.subjects)) {
+      const uAnsMap = userAnswers[sId] || {};
+      const qResults = [];
+      for (const q of (sData.questions || [])) {
+        const uVal = uAnsMap[q.questionNo];
+        if (uVal !== undefined && String(uVal).trim() !== '') {
+          const res = gradeSingleQuestion(q, uVal);
+          qResults.push({
+            questionNo: q.questionNo,
+            isCorrect: res.isCorrect,
+            earnedPoints: res.pointsEarned,
+            standardAnswer: q.standardAnswer,
+            userAnswerRaw: uVal
+          });
+        }
+      }
+      instSubjects[sId] = {
+        subjectId: sId,
+        questions: qResults
+      };
+    }
+
+    return {
+      isInstant: true,
+      subjects: instSubjects
+    };
+  }
+
+  /**
+   * 統一渲染當前試卷視圖
+   */
+  renderCurrentPaperView(tab = store.getState().activeSubjectId || 'ALL') {
+    const state = store.getState();
+    if (!state.currentPaper) return;
+    const instantGraded = this.getInstantGradedMap(state.currentPaper, state.userAnswers);
+    this.renderer.renderPaper(state.currentPaper, state.userAnswers, tab, state.lastReport || instantGraded);
+  }
+
+  /**
+   * 處理單題即時批改與聲效提示 (即填即審模式)
+   */
+  handleInstantGradingOnInput(inputEl, sId, qNo, val) {
+    const state = store.getState();
+    // 只有在即填即審模式且測驗尚未交卷時執行即時回饋
+    if (state.settings.gradingMode !== 'INSTANT' || state.lastReport) return;
+
+    const paper = state.currentPaper;
+    const question = paper?.subjects[sId]?.questions?.find(item => item.questionNo === qNo);
+    if (!question) return;
+
+    const wrapper = inputEl.closest('.input-wrapper');
+    const container = inputEl.closest('.ans-cell, .arithmetic-row, .td-cross-ans');
+
+    // 移除舊的指示標記
+    const oldInd = wrapper ? wrapper.querySelector('.grade-indicator') : null;
+    if (oldInd) oldInd.remove();
+
+    if (!val || String(val).trim() === '') {
+      if (container) container.classList.remove('ans-correct', 'ans-incorrect');
+      return;
+    }
+
+    const result = gradeSingleQuestion(question, val);
+    const soundEnabled = state.settings.soundEnabled;
+
+    if (result.isCorrect) {
+      if (container) {
+        container.classList.remove('ans-incorrect');
+        container.classList.add('ans-correct');
+      }
+      if (wrapper) {
+        wrapper.insertAdjacentHTML('beforeend', '<div class="grade-indicator indicator-correct">✓</div>');
+      }
+      if (soundEnabled) {
+        soundEngine.playCorrectSound();
+      }
+    } else {
+      if (container) {
+        container.classList.remove('ans-correct');
+        container.classList.add('ans-incorrect');
+      }
+      if (wrapper) {
+        wrapper.insertAdjacentHTML('beforeend', `<div class="grade-indicator indicator-wrong">✗ <span class="standard-ans">${result.answerFormatted}</span></div>`);
+      }
+      if (soundEnabled) {
+        soundEngine.playWrongSound();
+      }
+    }
   }
 
   /**
@@ -186,7 +300,7 @@ class AppController {
     const paper = generateExamPaper(examType, levelId);
     store.setPreviewPaper(paper);
     store.setActiveSubject(preferredSubjectTab);
-    this.renderer.renderPaper(paper, {}, preferredSubjectTab, null);
+    this.renderCurrentPaperView(preferredSubjectTab);
   }
 
   /**
@@ -210,7 +324,7 @@ class AppController {
     this.dom.timerDisplay.classList.remove('timer-warning');
 
     // 4. 渲染試卷並啟動鍵盤導航
-    this.renderer.renderPaper(paper, {}, 'ALL', null);
+    this.renderCurrentPaperView('ALL');
     this.keyboardNav.attach();
     this.keyboardNav.focusFirstInput(true);
 
@@ -301,7 +415,7 @@ class AppController {
       state = store.getState();
     } else {
       store.setActiveSubject(subjectId);
-      this.renderer.renderPaper(state.currentPaper, state.userAnswers, subjectId, state.lastReport);
+      this.renderCurrentPaperView(subjectId);
     }
     if (state.examStatus === 'IN_PROGRESS') {
       this.keyboardNav.focusFirstInput(true);
