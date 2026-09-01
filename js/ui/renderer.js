@@ -48,12 +48,10 @@ export class ExamRenderer {
           <div class="exam-stamp-box">
             <table class="stamp-table">
               <thead>
-                <tr><th colspan="2">得 分</th></tr>
-                <tr><th>初審</th><th>複審</th></tr>
+                <tr><th>得 分</th></tr>
               </thead>
               <tbody>
                 <tr>
-                  <td class="stamp-score">${isGraded && !isInstant ? gradedResult.totalEarnedScore : '&nbsp;'}</td>
                   <td class="stamp-score">${isGraded && !isInstant ? gradedResult.totalEarnedScore : '&nbsp;'}</td>
                 </tr>
               </tbody>
@@ -190,23 +188,28 @@ export class ExamRenderer {
                     autocomplete="off"
                     ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
                   />
-                  ${gradedQ ? `
-                    <div class="grade-indicator ${gradedQ.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
-                      ${gradedQ.isCorrect ? '✓' : `✗ <span class="standard-ans">${q.answerFormatted}</span>`}
-                    </div>
-                  ` : ''}
                 </div>
               </td>
             `;
           }).join('')}
         </tr>
         <tr class="row-stamp-row">
-          <td class="row-stamp-label">初審</td>
-          ${groupQuestions.map(q => `<td class="stamp-cell"></td>`).join('')}
-        </tr>
-        <tr class="row-stamp-row">
-          <td class="row-stamp-label">複審</td>
-          ${groupQuestions.map(q => `<td class="stamp-cell"></td>`).join('')}
+          <td class="row-stamp-label">審查</td>
+          ${groupQuestions.map(q => {
+            const gradedQ = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === q.questionNo) : null;
+            let auditContent = '';
+            let auditClass = '';
+            if (gradedQ) {
+              if (gradedQ.isCorrect) {
+                auditContent = '✓';
+                auditClass = 'stamp-correct';
+              } else {
+                auditContent = `<span class="audit-mark">✗</span><span class="audit-ans">${q.answerFormatted}</span>`;
+                auditClass = 'stamp-wrong';
+              }
+            }
+            return `<td class="stamp-cell ${auditClass}" data-audit-qno="${q.questionNo}">${auditContent}</td>`;
+          }).join('')}
         </tr>
       `;
 
@@ -239,8 +242,7 @@ export class ExamRenderer {
                 <th class="th-no">題號</th>
                 <th class="th-expr">算式題目</th>
                 <th class="th-ans">作答欄</th>
-                <th class="th-audit">初審</th>
-                <th class="th-audit">複審</th>
+                <th class="th-audit">審查</th>
               </tr>
             </thead>
             <tbody>
@@ -250,6 +252,18 @@ export class ExamRenderer {
         const userVal = userAnsMap[q.questionNo] || '';
         const gradedQ = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === q.questionNo) : null;
         const statusClass = gradedQ ? (gradedQ.isCorrect ? 'ans-correct' : 'ans-incorrect') : '';
+
+        let auditContent = '';
+        let auditClass = '';
+        if (gradedQ) {
+          if (gradedQ.isCorrect) {
+            auditContent = '✓';
+            auditClass = 'stamp-correct';
+          } else {
+            auditContent = `<span class="audit-mark">✗</span><span class="audit-ans">${q.answerFormatted}</span>`;
+            auditClass = 'stamp-wrong';
+          }
+        }
 
         html += `
           <tr class="arithmetic-row ${statusClass}">
@@ -269,15 +283,11 @@ export class ExamRenderer {
                   autocomplete="off"
                   ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
                 />
-                ${gradedQ ? `
-                  <div class="grade-indicator ${gradedQ.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
-                    ${gradedQ.isCorrect ? '✓' : `✗ <span class="standard-ans">${q.answerFormatted}</span>`}
-                  </div>
-                ` : ''}
               </div>
             </td>
-            <td class="td-audit"></td>
-            <td class="td-audit"></td>
+            <td class="td-audit ${auditClass}" data-audit-qno="${q.questionNo}">
+              ${auditContent}
+            </td>
           </tr>
         `;
       }
@@ -308,6 +318,7 @@ export class ExamRenderer {
               <th class="th-cross-no">No</th>
               ${Array.from({ length: cols }).map((_, c) => `<th class="th-cross-col">${colLabels[c] || c + 1}</th>`).join('')}
               <th class="th-cross-sum">橫列合計</th>
+              <th class="th-audit">審查</th>
             </tr>
           </thead>
           <tbody>
@@ -321,6 +332,18 @@ export class ExamRenderer {
       const userValRow = userAnsMap[qNoRow] || '';
       const gradedQRow = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === qNoRow) : null;
       const statusClassRow = gradedQRow ? (gradedQRow.isCorrect ? 'ans-correct' : 'ans-incorrect') : '';
+
+      let auditContentRow = '';
+      let auditClassRow = '';
+      if (gradedQRow) {
+        if (gradedQRow.isCorrect) {
+          auditContentRow = '✓';
+          auditClassRow = 'stamp-correct';
+        } else {
+          auditContentRow = `<span class="audit-mark">✗</span><span class="audit-ans">${qRow ? qRow.answerFormatted : ''}</span>`;
+          auditClassRow = 'stamp-wrong';
+        }
+      }
 
       html += `
         <tr class="cross-data-row">
@@ -344,12 +367,10 @@ export class ExamRenderer {
                 autocomplete="off"
                 ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
               />
-              ${gradedQRow ? `
-                <div class="grade-indicator ${gradedQRow.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
-                  ${gradedQRow.isCorrect ? '✓' : `✗ <span class="standard-ans">${qRow ? qRow.answerFormatted : ''}</span>`}
-                </div>
-              ` : ''}
             </div>
+          </td>
+          <td class="td-audit ${auditClassRow}" data-audit-qno="${qNoRow}">
+            ${auditContentRow}
           </td>
         </tr>
       `;
@@ -361,7 +382,6 @@ export class ExamRenderer {
         <td class="td-cross-label">縱列<br>合計</td>
         ${Array.from({ length: cols }).map((_, c) => {
           const qNoCol = c + 1;
-          const qCol = questions.find(q => q.questionNo === qNoCol);
           const userValCol = userAnsMap[qNoCol] || '';
           const gradedQCol = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === qNoCol) : null;
           const statusClassCol = gradedQCol ? (gradedQCol.isCorrect ? 'ans-correct' : 'ans-incorrect') : '';
@@ -381,16 +401,32 @@ export class ExamRenderer {
                   autocomplete="off"
                   ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
                 />
-                ${gradedQCol ? `
-                  <div class="grade-indicator ${gradedQCol.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
-                    ${gradedQCol.isCorrect ? '✓' : `✗ <span class="standard-ans">${qCol ? qCol.answerFormatted : ''}</span>`}
-                  </div>
-                ` : ''}
               </div>
             </td>
           `;
         }).join('')}
-        <td class="td-cross-blank"></td>
+        <td class="td-cross-blank" colspan="2"></td>
+      </tr>
+      <tr class="row-stamp-row cross-audit-row">
+        <td class="row-stamp-label">審查</td>
+        ${Array.from({ length: cols }).map((_, c) => {
+          const qNoCol = c + 1;
+          const qCol = questions.find(q => q.questionNo === qNoCol);
+          const gradedQCol = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === qNoCol) : null;
+          let auditContentCol = '';
+          let auditClassCol = '';
+          if (gradedQCol) {
+            if (gradedQCol.isCorrect) {
+              auditContentCol = '✓';
+              auditClassCol = 'stamp-correct';
+            } else {
+              auditContentCol = `<span class="audit-mark">✗</span><span class="audit-ans">${qCol ? qCol.answerFormatted : ''}</span>`;
+              auditClassCol = 'stamp-wrong';
+            }
+          }
+          return `<td class="stamp-cell ${auditClassCol}" data-audit-qno="${qNoCol}">${auditContentCol}</td>`;
+        }).join('')}
+        <td class="td-cross-blank" colspan="2"></td>
       </tr>
     `;
 

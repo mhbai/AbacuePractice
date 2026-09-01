@@ -257,15 +257,15 @@ class AppController {
     const question = paper?.subjects[sId]?.questions?.find(item => item.questionNo === qNo);
     if (!question) return;
 
-    const wrapper = inputEl.closest('.input-wrapper');
     const container = inputEl.closest('.ans-cell, .arithmetic-row, .td-cross-ans');
-
-    // 移除舊的指示標記
-    const oldInd = wrapper ? wrapper.querySelector('.grade-indicator') : null;
-    if (oldInd) oldInd.remove();
+    const auditCell = this.dom.examContainer.querySelector(`[data-audit-qno="${qNo}"]`);
 
     if (!val || String(val).trim() === '') {
       if (container) container.classList.remove('ans-correct', 'ans-incorrect');
+      if (auditCell) {
+        auditCell.classList.remove('stamp-correct', 'stamp-wrong');
+        auditCell.innerHTML = '';
+      }
       return;
     }
 
@@ -277,8 +277,10 @@ class AppController {
         container.classList.remove('ans-incorrect');
         container.classList.add('ans-correct');
       }
-      if (wrapper) {
-        wrapper.insertAdjacentHTML('beforeend', '<div class="grade-indicator indicator-correct">✓</div>');
+      if (auditCell) {
+        auditCell.classList.remove('stamp-wrong');
+        auditCell.classList.add('stamp-correct');
+        auditCell.innerHTML = '✓';
       }
       if (soundEnabled) {
         soundEngine.playCorrectSound();
@@ -288,8 +290,10 @@ class AppController {
         container.classList.remove('ans-correct');
         container.classList.add('ans-incorrect');
       }
-      if (wrapper) {
-        wrapper.insertAdjacentHTML('beforeend', `<div class="grade-indicator indicator-wrong">✗ <span class="standard-ans">${result.answerFormatted}</span></div>`);
+      if (auditCell) {
+        auditCell.classList.remove('stamp-correct');
+        auditCell.classList.add('stamp-wrong');
+        auditCell.innerHTML = `<span class="audit-mark">✗</span><span class="audit-ans">${result.answerFormatted}</span>`;
       }
       if (soundEnabled) {
         soundEngine.playWrongSound();
