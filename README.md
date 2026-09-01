@@ -16,7 +16,7 @@
 
 ## 📸 介面預覽 (Interface Preview)
 
-![珠心算模擬測驗與自動評分平台](assets/preview.jpg)
+![珠心算模擬測驗與自動評分平台]()
 
 ---
 
