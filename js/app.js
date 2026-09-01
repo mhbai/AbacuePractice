@@ -143,6 +143,7 @@ class AppController {
       const nextTheme = themes[(themes.indexOf(currentTheme) + 1) % themes.length];
       store.updateSettings({ theme: nextTheme });
       document.documentElement.setAttribute('data-theme', nextTheme);
+      this.updateThemeIcon(nextTheme);
     });
 
     // 試卷委派事件 (輸入作答與即時批改、頁籤切換)
@@ -166,12 +167,31 @@ class AppController {
   }
 
   /**
+   * 更新深淺主題圖示 (太陽 ☀️ / 月亮 🌙)
+   * @param {string} theme
+   */
+  updateThemeIcon(theme) {
+    if (!this.dom.btnToggleTheme) return;
+    if (theme === 'dark') {
+      this.dom.btnToggleTheme.textContent = '☀️';
+      this.dom.btnToggleTheme.title = '目前為深色模式，點擊切換為明亮試卷主題';
+      this.dom.btnToggleTheme.setAttribute('aria-label', '切換為明亮主題');
+    } else {
+      this.dom.btnToggleTheme.textContent = '🌙';
+      this.dom.btnToggleTheme.title = '目前為淺色模式，點擊切換為深色夜間主題';
+      this.dom.btnToggleTheme.setAttribute('aria-label', '切換為深色主題');
+    }
+  }
+
+  /**
    * 套用偏好設定至介面
    */
   applySettingsToUI() {
     const { settings } = store.getState();
-    document.documentElement.setAttribute('data-theme', settings.theme || 'paper');
+    const currentTheme = settings.theme || 'paper';
+    document.documentElement.setAttribute('data-theme', currentTheme);
     this.dom.btnToggleSound.textContent = settings.soundEnabled ? '🔊' : '🔇';
+    this.updateThemeIcon(currentTheme);
     if (this.dom.selectGradingMode) {
       this.dom.selectGradingMode.value = settings.gradingMode || 'ON_SUBMIT';
     }
