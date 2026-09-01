@@ -268,7 +268,7 @@ class AppController {
     if (!question) return;
 
     const container = inputEl.closest('.ans-cell, .arithmetic-row, .td-cross-ans');
-    const auditCell = this.dom.examContainer.querySelector(`[data-audit-qno="${qNo}"]`);
+    const auditCell = this.dom.examContainer.querySelector(`[data-subject="${sId}"][data-audit-qno="${qNo}"]`) || this.dom.examContainer.querySelector(`[data-audit-qno="${qNo}"]`);
 
     if (!val || String(val).trim() === '') {
       if (container) container.classList.remove('ans-correct', 'ans-incorrect');

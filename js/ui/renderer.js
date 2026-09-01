@@ -228,7 +228,7 @@ export class ExamRenderer {
                 auditClass = 'stamp-wrong';
               }
             }
-            return `<td class="stamp-cell ${auditClass}" data-audit-qno="${q.questionNo}">${auditContent}</td>`;
+            return `<td class="stamp-cell ${auditClass}" data-subject="${subjectData.subjectId}" data-audit-qno="${q.questionNo}">${auditContent}</td>`;
           }).join('')}
         </tr>
       `;
@@ -305,7 +305,7 @@ export class ExamRenderer {
                 />
               </div>
             </td>
-            <td class="td-audit ${auditClass}" data-audit-qno="${q.questionNo}">
+            <td class="td-audit ${auditClass}" data-subject="${subjectId}" data-audit-qno="${q.questionNo}">
               ${auditContent}
             </td>
           </tr>
@@ -389,7 +389,7 @@ export class ExamRenderer {
               />
             </div>
           </td>
-          <td class="td-audit ${auditClassRow}" data-audit-qno="${qNoRow}">
+          <td class="td-audit ${auditClassRow}" data-subject="${subjectData.subjectId}" data-audit-qno="${qNoRow}">
             ${auditContentRow}
           </td>
         </tr>
@@ -444,7 +444,7 @@ export class ExamRenderer {
               auditClassCol = 'stamp-wrong';
             }
           }
-          return `<td class="stamp-cell ${auditClassCol}" data-audit-qno="${qNoCol}">${auditContentCol}</td>`;
+          return `<td class="stamp-cell ${auditClassCol}" data-subject="${subjectData.subjectId}" data-audit-qno="${qNoCol}">${auditContentCol}</td>`;
         }).join('')}
         <td class="td-cross-blank" colspan="2"></td>
       </tr>
