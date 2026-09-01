@@ -136,11 +136,10 @@ class AppController {
       this.dom.btnToggleSound.textContent = !current ? '🔊' : '🔇';
     });
 
-    // 主題切換 (paper -> dark -> light)
+    // 主題切換 (深色模式 dark <-> 淺色試卷 paper)
     this.dom.btnToggleTheme.addEventListener('click', () => {
-      const themes = ['paper', 'dark', 'light'];
       const currentTheme = store.getState().settings.theme || 'paper';
-      const nextTheme = themes[(themes.indexOf(currentTheme) + 1) % themes.length];
+      const nextTheme = (currentTheme === 'dark') ? 'paper' : 'dark';
       store.updateSettings({ theme: nextTheme });
       document.documentElement.setAttribute('data-theme', nextTheme);
       this.updateThemeIcon(nextTheme);
