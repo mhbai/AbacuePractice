@@ -17,7 +17,7 @@ export class ExamRenderer {
    * @param {string} activeSubjectId - 科目 ID 或 'ALL'
    * @param {object} [gradedResult=null] - 若已交卷批改，傳入評分結果以標記對錯
    */
-  renderPaper(examPaper, userAnswers = {}, activeSubjectId = null, gradedResult = null) {
+  renderPaper(examPaper, userAnswers = {}, activeSubjectId = null, gradedResult = null, examStatus = 'IDLE') {
     if (!examPaper) {
       this.container.innerHTML = `<div class="empty-state">請選擇測驗項目並點擊「開始測驗」</div>`;
       return;
@@ -26,13 +26,15 @@ export class ExamRenderer {
     const { examType, levelName, timeLimitSeconds, subjects } = examPaper;
     const isGraded = !!gradedResult;
     const isInstant = !!(gradedResult && gradedResult.isInstant);
+    const isIdle = examStatus === 'IDLE';
+    const isInputDisabled = examStatus !== 'IN_PROGRESS';
 
     const isMental = examType === 'MENTAL';
     const mainTitle = isMental ? '心 算 測 試' : '珠 算 測 試';
     const mainSubtitle = isMental ? 'MENTAL CALCULATION EXAMINATION' : 'ABACUS CALCULATION EXAMINATION';
 
     let html = `
-      <div class="exam-sheet ${isGraded && !isInstant ? 'is-graded-sheet' : ''}">
+      <div class="exam-sheet ${isGraded && !isInstant ? 'is-graded-sheet' : ''} ${isIdle ? 'is-idle-sheet' : ''}">
         <!-- 試卷標頭 -->
         <header class="exam-sheet-header">
           <div class="exam-header-main">
@@ -85,7 +87,25 @@ export class ExamRenderer {
       `;
     }
 
-    html += `</nav><div class="exam-sheet-body">`;
+    html += `</nav><div class="exam-sheet-body-wrapper">`;
+
+    // 若未開始測驗，渲染毛玻璃遮罩與提示卡片
+    if (isIdle) {
+      html += `
+        <div class="exam-idle-glass-overlay">
+          <div class="glass-prompt-card">
+            <div class="glass-icon">⏱️</div>
+            <h3 class="glass-title">測驗尚未開始</h3>
+            <p class="glass-desc">請確認上方「測驗項目」、「報考級別」與「批改模式」後，點擊開始測驗。</p>
+            <button class="btn btn-primary btn-glass-start" id="btn-overlay-start">
+              ▶ 立即開始測驗 (限時 ${Math.floor(timeLimitSeconds / 60)} 分鐘)
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    html += `<div class="exam-sheet-body">`;
 
     // 渲染各科目內容
     for (const [sId, sData] of Object.entries(subjects)) {
@@ -107,17 +127,17 @@ export class ExamRenderer {
       `;
 
       if (sId === SUBJECT_TYPES.ADD_SUB) {
-        html += this.renderAddSubSection(sData, userAnswers[sId] || {}, gradedSubject);
+        html += this.renderAddSubSection(sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled);
       } else if (sId === SUBJECT_TYPES.CROSS_ADD_SUB) {
-        html += this.renderCrossAddSubSection(sData, userAnswers[sId] || {}, gradedSubject);
+        html += this.renderCrossAddSubSection(sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled);
       } else if (sId === SUBJECT_TYPES.MULTIPLICATION || sId === SUBJECT_TYPES.DIVISION) {
-        html += this.renderArithmeticSection(sId, sData, userAnswers[sId] || {}, gradedSubject);
+        html += this.renderArithmeticSection(sId, sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled);
       }
 
       html += `</section>`;
     }
 
-    html += `</div></div>`;
+    html += `</div></div></div>`;
 
     this.container.innerHTML = html;
   }
@@ -125,7 +145,7 @@ export class ExamRenderer {
   /**
    * 渲染加減算直式縱列排版 (標準每 5 題一組)
    */
-  renderAddSubSection(subjectData, userAnsMap, gradedSubject) {
+  renderAddSubSection(subjectData, userAnsMap, gradedSubject, isInputDisabled = false) {
     const questions = subjectData.questions || [];
     if (questions.length === 0) return '';
 
@@ -186,7 +206,7 @@ export class ExamRenderer {
                     value="${userVal}"
                     placeholder="輸入"
                     autocomplete="off"
-                    ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
+                    ${isInputDisabled ? 'readonly disabled' : ''}
                   />
                 </div>
               </td>
@@ -223,7 +243,7 @@ export class ExamRenderer {
   /**
    * 渲染乘算與除算題目表格 (自適應雙欄或四欄)
    */
-  renderArithmeticSection(subjectId, subjectData, userAnsMap, gradedSubject) {
+  renderArithmeticSection(subjectId, subjectData, userAnsMap, gradedSubject, isInputDisabled = false) {
     const questions = subjectData.questions || [];
     const colCount = questions.length >= 30 ? 2 : 2; // 雙大欄排版
     const midPoint = Math.ceil(questions.length / colCount);
@@ -281,7 +301,7 @@ export class ExamRenderer {
                   value="${userVal}"
                   placeholder="輸入答案"
                   autocomplete="off"
-                  ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
+                  ${isInputDisabled ? 'readonly disabled' : ''}
                 />
               </div>
             </td>
@@ -302,7 +322,7 @@ export class ExamRenderer {
   /**
    * 渲染縱橫列計算表格 (4 縱列 × 5 橫列 = 9 題)
    */
-  renderCrossAddSubSection(subjectData, userAnsMap, gradedSubject) {
+  renderCrossAddSubSection(subjectData, userAnsMap, gradedSubject, isInputDisabled = false) {
     const matrix = subjectData.matrix || [];
     const rows = subjectData.rows || (matrix.length || 5);
     const cols = subjectData.cols || (matrix[0] ? matrix[0].length : 4);
@@ -365,7 +385,7 @@ export class ExamRenderer {
                 value="${userValRow}"
                 placeholder="橫計"
                 autocomplete="off"
-                ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
+                ${isInputDisabled ? 'readonly disabled' : ''}
               />
             </div>
           </td>
@@ -399,7 +419,7 @@ export class ExamRenderer {
                   value="${userValCol}"
                   placeholder="縱計"
                   autocomplete="off"
-                  ${gradedSubject && !gradedSubject.isInstant ? 'readonly' : ''}
+                  ${isInputDisabled ? 'readonly disabled' : ''}
                 />
               </div>
             </td>

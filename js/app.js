@@ -157,6 +157,10 @@ class AppController {
     });
 
     this.dom.examContainer.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-overlay-start')) {
+        this.handleStartExam();
+        return;
+      }
       const tabBtn = e.target.closest('[data-subject-tab]');
       if (tabBtn) {
         const targetTab = tabBtn.getAttribute('data-subject-tab');
@@ -242,7 +246,13 @@ class AppController {
     const state = store.getState();
     if (!state.currentPaper) return;
     const instantGraded = this.getInstantGradedMap(state.currentPaper, state.userAnswers);
-    this.renderer.renderPaper(state.currentPaper, state.userAnswers, tab, state.lastReport || instantGraded);
+    this.renderer.renderPaper(
+      state.currentPaper,
+      state.userAnswers,
+      tab,
+      state.lastReport || instantGraded,
+      state.examStatus
+    );
   }
 
   /**
@@ -414,8 +424,8 @@ class AppController {
     this.dom.selectLevel.disabled = false;
     this.dom.timerDisplay.classList.remove('timer-warning');
 
-    // 4. 重新渲染試卷 (帶批改標記與標準答案)
-    this.renderer.renderPaper(state.currentPaper, state.userAnswers, state.activeSubjectId, report);
+    // 4. 重新渲染試卷 (帶批改標記與標準答案，輸入框鎖定為唯讀)
+    this.renderCurrentPaperView(state.activeSubjectId);
 
     // 5. 彈出成績單
     this.reportView.showReportModal(report, {
