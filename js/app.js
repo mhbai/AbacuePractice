@@ -177,13 +177,16 @@ class AppController {
   }
 
   /**
-   * 準備初始預覽試卷
+   * 準備初始預覽試卷 (同步記錄於 store 中，避免切換頁籤時題目丟失)
+   * @param {string} [preferredSubjectTab='ALL']
    */
-  prepareInitialView() {
+  prepareInitialView(preferredSubjectTab = 'ALL') {
     const examType = this.dom.selectExamType.value;
     const levelId = this.dom.selectLevel.value;
     const paper = generateExamPaper(examType, levelId);
-    this.renderer.renderPaper(paper, {}, 'ALL', null);
+    store.setPreviewPaper(paper);
+    store.setActiveSubject(preferredSubjectTab);
+    this.renderer.renderPaper(paper, {}, preferredSubjectTab, null);
   }
 
   /**
@@ -292,9 +295,14 @@ class AppController {
    * 切換科目頁籤
    */
   switchSubjectTab(subjectId) {
-    const state = store.getState();
-    store.setActiveSubject(subjectId);
-    this.renderer.renderPaper(state.currentPaper, state.userAnswers, subjectId, state.lastReport);
+    let state = store.getState();
+    if (!state.currentPaper) {
+      this.prepareInitialView(subjectId);
+      state = store.getState();
+    } else {
+      store.setActiveSubject(subjectId);
+      this.renderer.renderPaper(state.currentPaper, state.userAnswers, subjectId, state.lastReport);
+    }
     if (state.examStatus === 'IN_PROGRESS') {
       this.keyboardNav.focusFirstInput(true);
     }

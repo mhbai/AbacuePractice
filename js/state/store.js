@@ -67,10 +67,21 @@ class Store {
   /**
    * 設定目前測驗大類與級別
    */
-  setExamSelection(examType, levelId) {
-    this.state.examType = examType;
-    this.state.levelId = levelId;
-    this.notify('examSelection');
+  /**
+   * 設定預覽試卷 (IDLE 狀態下保持題目快照)
+   * @param {object} examPaper
+   */
+  setPreviewPaper(examPaper) {
+    this.state.currentPaper = examPaper;
+    this.state.userAnswers = {};
+    for (const subjId of Object.keys(examPaper.subjects)) {
+      this.state.userAnswers[subjId] = {};
+    }
+    this.state.examStatus = 'IDLE';
+    this.state.timeRemaining = examPaper.timeLimitSeconds;
+    this.state.timeSpent = 0;
+    this.state.lastReport = null;
+    this.notify('previewPaper');
   }
 
   /**
