@@ -7,7 +7,8 @@ import { EXAM_TYPES } from '../config/quizConfig.js';
 
 const STORAGE_KEYS = {
   HISTORY: 'abacus_mental_quiz_history_v1',
-  SETTINGS: 'abacus_mental_quiz_settings_v1'
+  SETTINGS: 'abacus_mental_quiz_settings_v1',
+  LAST_SELECTION: 'abacus_mental_quiz_last_selection_v1'
 };
 
 const DEFAULT_SETTINGS = {
@@ -21,9 +22,10 @@ const DEFAULT_SETTINGS = {
 class Store {
   constructor() {
     this.listeners = new Set();
+    const lastSel = this.loadLastSelection();
     this.state = {
-      examType: EXAM_TYPES.MENTAL,
-      levelId: 'class_1',
+      examType: lastSel.examType || EXAM_TYPES.MENTAL,
+      levelId: lastSel.levelId || 'pre_class_12',
       currentPaper: null,
       userAnswers: {}, // { [subjectId]: { [questionNo]: string } }
       examStatus: 'IDLE', // 'IDLE' | 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED'
@@ -207,6 +209,29 @@ class Store {
       localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
     } catch (e) {
       console.warn('Failed to save history report', e);
+    }
+  }
+
+  /**
+   * 讀取上次選擇的測驗項目與級別 (預設為心算 準12級)
+   */
+  loadLastSelection() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.LAST_SELECTION);
+      return data ? JSON.parse(data) : { examType: EXAM_TYPES.MENTAL, levelId: 'pre_class_12' };
+    } catch (e) {
+      return { examType: EXAM_TYPES.MENTAL, levelId: 'pre_class_12' };
+    }
+  }
+
+  /**
+   * 儲存選擇的測驗項目與級別
+   */
+  saveLastSelection(examType, levelId) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.LAST_SELECTION, JSON.stringify({ examType, levelId }));
+    } catch (e) {
+      console.warn('Failed to save last selection', e);
     }
   }
 

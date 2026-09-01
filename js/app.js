@@ -43,49 +43,61 @@ class AppController {
     // 1. 初始化設定與主題
     this.applySettingsToUI();
 
-    // 2. 填充級別下拉選單
-    this.populateLevels(this.dom.selectExamType.value);
+    // 2. 載入上次選擇或預設準12級
+    const { examType, levelId } = store.getState();
+    if (this.dom.selectExamType) {
+      this.dom.selectExamType.value = examType || EXAM_TYPES.MENTAL;
+    }
 
-    // 3. 事件綁定
+    // 3. 填充級別下拉選單
+    this.populateLevels(this.dom.selectExamType.value, levelId || 'pre_class_12');
+
+    // 4. 事件綁定
     this.bindEvents();
 
-    // 4. 訂閱 Store
+    // 5. 訂閱 Store
     store.subscribe((state, changeKey) => this.handleStoreChange(state, changeKey));
 
-    // 5. 初始載入預覽題庫
+    // 6. 初始載入預覽題庫
     this.prepareInitialView();
   }
 
   /**
-   * 填充級別選項清單
+   * 填充級別選項清單 (預設優先選取準12級或上次記憶之級別)
    * @param {string} examType
+   * @param {string} [preferredLevelId='pre_class_12']
    */
-  populateLevels(examType) {
+  populateLevels(examType, preferredLevelId = 'pre_class_12') {
     const levels = getLevelList(examType);
     this.dom.selectLevel.innerHTML = levels.map(lvl => `
       <option value="${lvl.levelId}">${lvl.levelName}</option>
     `).join('');
 
-    // 預設選取第一級或段位
-    const defaultLevel = levels.find(l => l.levelId === 'class_1') || levels[0];
-    if (defaultLevel) {
-      this.dom.selectLevel.value = defaultLevel.levelId;
-    }
+    // 優先選取指定級別或準12級
+    const hasTarget = levels.some(l => l.levelId === preferredLevelId);
+    const targetLevelId = hasTarget ? preferredLevelId : (levels.some(l => l.levelId === 'pre_class_12') ? 'pre_class_12' : levels[0].levelId);
+    
+    this.dom.selectLevel.value = targetLevelId;
   }
 
   /**
    * 綁定 DOM 事件
    */
   bindEvents() {
-    // 測驗大類別變更
+    // 測驗大類別變更：切換題型、更新倒數、即時切換試卷題庫並記錄至 localStorage
     this.dom.selectExamType.addEventListener('change', (e) => {
-      this.populateLevels(e.target.value);
+      const currentLevel = this.dom.selectLevel.value;
+      this.populateLevels(e.target.value, currentLevel);
+      store.saveLastSelection(this.dom.selectExamType.value, this.dom.selectLevel.value);
       this.updateDefaultTimerPreview();
+      this.prepareInitialView();
     });
 
-    // 級別變更
+    // 級別變更：更新倒數、即時切換試卷題庫並記錄至 localStorage
     this.dom.selectLevel.addEventListener('change', () => {
+      store.saveLastSelection(this.dom.selectExamType.value, this.dom.selectLevel.value);
       this.updateDefaultTimerPreview();
+      this.prepareInitialView();
     });
 
     // 開始測驗按鈕
