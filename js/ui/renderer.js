@@ -26,13 +26,17 @@ export class ExamRenderer {
     const { examType, levelName, timeLimitSeconds, subjects } = examPaper;
     const isGraded = !!gradedResult;
 
+    const isMental = examType === 'MENTAL';
+    const mainTitle = isMental ? '心 算 測 試' : '珠 算 測 試';
+    const mainSubtitle = isMental ? 'MENTAL CALCULATION EXAMINATION' : 'ABACUS CALCULATION EXAMINATION';
+
     let html = `
       <div class="exam-sheet ${isGraded ? 'is-graded-sheet' : ''}">
-        <!-- 試卷標頭 (標準公會版型) -->
+        <!-- 試卷標頭 -->
         <header class="exam-sheet-header">
           <div class="exam-header-main">
-            <h1 class="exam-org-title">珠 算 心 算 聯 合 測 試</h1>
-            <p class="exam-org-subtitle">ABACUS & MENTAL CALCULATION EXAMINATION</p>
+            <h1 class="exam-org-title">${mainTitle}</h1>
+            <p class="exam-org-subtitle">${mainSubtitle}</p>
             <h2 class="exam-test-title">${levelName} 模擬測驗試題</h2>
             <div class="exam-meta-info">
               <span class="exam-tag"><i class="icon-clock"></i> 限時 ${Math.floor(timeLimitSeconds / 60)} 分鐘</span>
