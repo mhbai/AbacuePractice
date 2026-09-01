@@ -1,0 +1,26 @@
+{
+  "name": "珠算與心算線上模擬測驗與自動評分平台",
+  "short_name": "珠心算測驗",
+  "description": "支援段位、1~12級、準12級之珠心算線上模擬測驗，具備極致純鍵盤操作與即時自動批改。",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#8b261e",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
