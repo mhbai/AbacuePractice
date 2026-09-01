@@ -422,6 +422,79 @@
 }
 
 /* -------------------------------------------------------------
+   縱橫列計算 (4 縱列 × 5 橫列 交叉表格)
+   ------------------------------------------------------------- */
+.cross-table-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.cross-addsub-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.cross-addsub-table th, .cross-addsub-table td {
+  border: 1px solid var(--border-color);
+  padding: 0.45rem 0.6rem;
+  text-align: right;
+}
+
+.cross-addsub-table thead th {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.th-cross-no { width: 45px; background-color: var(--bg-surface) !important; }
+.th-cross-sum { width: 140px; background-color: var(--primary-light) !important; color: var(--primary) !important; }
+
+.td-cross-index {
+  text-align: center;
+  color: var(--text-subtle);
+  background-color: var(--bg-surface);
+  font-weight: 600;
+}
+
+.td-cross-cell {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.td-cross-cell.is-negative {
+  color: var(--color-wrong);
+}
+
+.cross-col-sum-row td {
+  background-color: var(--bg-app);
+  border-top: 2px solid var(--text-main);
+}
+
+.td-cross-label {
+  text-align: center;
+  font-weight: 700;
+  font-family: var(--font-serif);
+  color: var(--primary);
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.td-cross-ans .quiz-answer-input {
+  max-width: 120px;
+}
+
+.td-cross-blank {
+  background-color: var(--bg-surface);
+}
+
+/* -------------------------------------------------------------
    列印模式 (A4 列印優化)
    ------------------------------------------------------------- */
 @media print {

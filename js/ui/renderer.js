@@ -105,6 +105,8 @@ export class ExamRenderer {
 
       if (sId === SUBJECT_TYPES.ADD_SUB) {
         html += this.renderAddSubSection(sData, userAnswers[sId] || {}, gradedSubject);
+      } else if (sId === SUBJECT_TYPES.CROSS_ADD_SUB) {
+        html += this.renderCrossAddSubSection(sData, userAnswers[sId] || {}, gradedSubject);
       } else if (sId === SUBJECT_TYPES.MULTIPLICATION || sId === SUBJECT_TYPES.DIVISION) {
         html += this.renderArithmeticSection(sId, sData, userAnswers[sId] || {}, gradedSubject);
       }
@@ -279,6 +281,115 @@ export class ExamRenderer {
     }
 
     html += `</div>`;
+    return html;
+  }
+
+  /**
+   * 渲染縱橫列計算表格 (4 縱列 × 5 橫列 = 9 題)
+   */
+  renderCrossAddSubSection(subjectData, userAnsMap, gradedSubject) {
+    const matrix = subjectData.matrix || [];
+    const rows = subjectData.rows || (matrix.length || 5);
+    const cols = subjectData.cols || (matrix[0] ? matrix[0].length : 4);
+    const questions = subjectData.questions || [];
+
+    const colLabels = ['一', '二', '三', '四', '五'];
+
+    let html = `
+      <div class="cross-table-wrapper">
+        <table class="cross-addsub-table">
+          <thead>
+            <tr>
+              <th class="th-cross-no">No</th>
+              ${Array.from({ length: cols }).map((_, c) => `<th class="th-cross-col">${colLabels[c] || c + 1}</th>`).join('')}
+              <th class="th-cross-sum">橫列合計</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    // 渲染各橫列數字與右側橫列合計輸入框
+    for (let r = 0; r < rows; r++) {
+      // 橫列合計題目編號: cols + r + 1
+      const qNoRow = cols + r + 1;
+      const qRow = questions.find(q => q.questionNo === qNoRow);
+      const userValRow = userAnsMap[qNoRow] || '';
+      const gradedQRow = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === qNoRow) : null;
+      const statusClassRow = gradedQRow ? (gradedQRow.isCorrect ? 'ans-correct' : 'ans-incorrect') : '';
+
+      html += `
+        <tr class="cross-data-row">
+          <td class="td-cross-index">${r + 1}</td>
+          ${Array.from({ length: cols }).map((_, c) => {
+            const cell = matrix[r] && matrix[r][c];
+            if (!cell) return `<td class="td-cross-cell">-</td>`;
+            return `<td class="td-cross-cell ${cell.isNegative ? 'is-negative' : ''}">${cell.display}</td>`;
+          }).join('')}
+          <td class="td-cross-ans ${statusClassRow}">
+            <div class="input-wrapper">
+              <input
+                type="text"
+                inputmode="decimal"
+                class="quiz-answer-input"
+                data-subject="${subjectData.subjectId}"
+                data-qno="${qNoRow}"
+                data-grid-cols="${cols + 1}"
+                value="${userValRow}"
+                placeholder="橫計"
+                autocomplete="off"
+                ${gradedSubject ? 'readonly' : ''}
+              />
+              ${gradedQRow ? `
+                <div class="grade-indicator ${gradedQRow.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
+                  ${gradedQRow.isCorrect ? '✓' : `✗ <span class="standard-ans">${qRow ? qRow.answerFormatted : ''}</span>`}
+                </div>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    // 渲染底部縱列合計列
+    html += `
+      <tr class="cross-col-sum-row">
+        <td class="td-cross-label">縱列<br>合計</td>
+        ${Array.from({ length: cols }).map((_, c) => {
+          const qNoCol = c + 1;
+          const qCol = questions.find(q => q.questionNo === qNoCol);
+          const userValCol = userAnsMap[qNoCol] || '';
+          const gradedQCol = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === qNoCol) : null;
+          const statusClassCol = gradedQCol ? (gradedQCol.isCorrect ? 'ans-correct' : 'ans-incorrect') : '';
+
+          return `
+            <td class="td-cross-ans ${statusClassCol}">
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  class="quiz-answer-input"
+                  data-subject="${subjectData.subjectId}"
+                  data-qno="${qNoCol}"
+                  data-grid-cols="${cols}"
+                  value="${userValCol}"
+                  placeholder="縱計"
+                  autocomplete="off"
+                  ${gradedSubject ? 'readonly' : ''}
+                />
+                ${gradedQCol ? `
+                  <div class="grade-indicator ${gradedQCol.isCorrect ? 'indicator-correct' : 'indicator-wrong'}">
+                    ${gradedQCol.isCorrect ? '✓' : `✗ <span class="standard-ans">${qCol ? qCol.answerFormatted : ''}</span>`}
+                  </div>
+                ` : ''}
+              </div>
+            </td>
+          `;
+        }).join('')}
+        <td class="td-cross-blank"></td>
+      </tr>
+    `;
+
+    html += `</tbody></table></div>`;
     return html;
   }
 }

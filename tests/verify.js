@@ -77,10 +77,21 @@ async function runTests() {
             }
           }
         }
+
+        // 驗證縱橫列計算
+        const cross = paper.subjects.CROSS_ADD_SUB;
+        if (cross) {
+          for (const q of cross.questions) {
+            totalQuestions++;
+            if (isNaN(q.standardAnswer)) {
+              throw new Error(`縱橫列計算標準答案異常: ${q.label}`);
+            }
+          }
+        }
       }
     }
   }
-  console.log(`  ✓ 成功生成 ${totalPapers} 份完整試卷（共 ${totalQuestions} 道題目），加減算非負約束與整除約束 100% 達成！`);
+  console.log(`  ✓ 成功生成 ${totalPapers} 份完整試卷（共 ${totalQuestions} 道題目），加減算非負約束、整除約束與縱橫列計算 100% 達成！`);
 
   // 3. 驗證評分器、容錯標準化與段位判定
   console.log('\n[測試 3] 驗證自動評分器、輸入容錯比對與段位判定...');

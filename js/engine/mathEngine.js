@@ -391,6 +391,113 @@ export function generateDivisionQuestion(spec, questionNo, totalQuestions) {
 }
 
 /**
+ * 縱橫列計算題目生成器 (Cross Addition/Subtraction Generator)
+ * 產生 5列 × 4行 之矩陣，並計算 4 縱列合計 + 5 橫列合計 (共 9 題)
+ * @param {object} spec
+ * @returns {object[]} 回傳 9 個題目項目
+ */
+export function generateCrossAddSubQuestions(spec) {
+  const {
+    rows = 5,
+    cols = 4,
+    subtractionRatio = 0.25,
+    digitDistribution = [{ minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 9, weight: 1.0 }]
+  } = spec;
+
+  // 1. 建立 matrix[rows][cols]
+  const matrix = [];
+  for (let r = 0; r < rows; r++) {
+    matrix[r] = [];
+  }
+
+  // 2. 逐欄生成數字，確保每一縱列之累計總和在每一步驟均 > 0
+  for (let c = 0; c < cols; c++) {
+    let colRunningSum = 0;
+    for (let r = 0; r < rows; r++) {
+      const dist = getRandomChoice(digitDistribution);
+      const minVal = dist.minVal || 1;
+      const maxVal = dist.maxVal || 9;
+      let val = getRandomInt(minVal, maxVal);
+
+      const canSub = r > 0 && subtractionRatio > 0 && Math.random() < subtractionRatio;
+      if (canSub && colRunningSum - val > 0) {
+        colRunningSum -= val;
+        matrix[r][c] = {
+          rawVal: -val,
+          display: `-${val}`,
+          isNegative: true
+        };
+      } else {
+        colRunningSum += val;
+        matrix[r][c] = {
+          rawVal: val,
+          display: `${val}`,
+          isNegative: false
+        };
+      }
+    }
+  }
+
+  // 3. 計算 4 個縱列合計
+  const colSums = [];
+  for (let c = 0; c < cols; c++) {
+    let sum = 0;
+    for (let r = 0; r < rows; r++) {
+      sum += matrix[r][c].rawVal;
+    }
+    colSums.push(sum);
+  }
+
+  // 4. 計算 5 個橫列合計
+  const rowSums = [];
+  for (let r = 0; r < rows; r++) {
+    let sum = 0;
+    for (let c = 0; c < cols; c++) {
+      sum += matrix[r][c].rawVal;
+    }
+    rowSums.push(sum);
+  }
+
+  // 5. 組合 9 道作答題目
+  const questions = [];
+  const colLabels = ['一', '二', '三', '四', '五'];
+
+  // Q1 ~ Q4: 縱列合計
+  for (let c = 0; c < cols; c++) {
+    const qNo = c + 1;
+    questions.push({
+      id: `cross_col_${c + 1}`,
+      questionNo: qNo,
+      type: SUBJECT_TYPES.CROSS_ADD_SUB,
+      targetType: 'col',
+      targetIndex: c,
+      label: `縱列【${colLabels[c] || c + 1}】合計`,
+      matrix,
+      standardAnswer: colSums[c],
+      answerFormatted: String(colSums[c])
+    });
+  }
+
+  // Q5 ~ Q9: 橫列合計
+  for (let r = 0; r < rows; r++) {
+    const qNo = cols + r + 1;
+    questions.push({
+      id: `cross_row_${r + 1}`,
+      questionNo: qNo,
+      type: SUBJECT_TYPES.CROSS_ADD_SUB,
+      targetType: 'row',
+      targetIndex: r,
+      label: `橫列【第 ${r + 1} 行】合計`,
+      matrix,
+      standardAnswer: rowSums[r],
+      answerFormatted: String(rowSums[r])
+    });
+  }
+
+  return { matrix, rows, cols, questions };
+}
+
+/**
  * 產生完整測驗試卷 (Full Exam Paper Generator)
  * @param {string} examType - 'MENTAL' | 'ABACUS'
  * @param {string} levelId - 'degree' | 'class_1' ...
@@ -409,38 +516,47 @@ export function generateExamPaper(examType, levelId) {
   let totalPossibleScore = 0;
 
   for (const [subjectType, subjectConfig] of Object.entries(levelConfig.subjects)) {
-    const questions = [];
+    let questions = [];
     const count = subjectConfig.questionCount;
+    let extraData = {};
 
-    for (let i = 1; i <= count; i++) {
-      let q;
-      switch (subjectType) {
-        case SUBJECT_TYPES.ADD_SUB:
-          q = generateAddSubQuestion(subjectConfig.spec, i);
-          break;
-        case SUBJECT_TYPES.MULTIPLICATION:
-          q = generateMultiplicationQuestion(subjectConfig.spec, i, count);
-          break;
-        case SUBJECT_TYPES.DIVISION:
-          q = generateDivisionQuestion(subjectConfig.spec, i, count);
-          break;
-        default:
-          throw new Error(`Unknown subject type: ${subjectType}`);
+    if (subjectType === SUBJECT_TYPES.CROSS_ADD_SUB) {
+      const crossResult = generateCrossAddSubQuestions(subjectConfig.spec);
+      questions = crossResult.questions;
+      questions.forEach(q => { q.points = subjectConfig.pointsPerQuestion; });
+      extraData = { matrix: crossResult.matrix, rows: crossResult.rows, cols: crossResult.cols };
+    } else {
+      for (let i = 1; i <= count; i++) {
+        let q;
+        switch (subjectType) {
+          case SUBJECT_TYPES.ADD_SUB:
+            q = generateAddSubQuestion(subjectConfig.spec, i);
+            break;
+          case SUBJECT_TYPES.MULTIPLICATION:
+            q = generateMultiplicationQuestion(subjectConfig.spec, i, count);
+            break;
+          case SUBJECT_TYPES.DIVISION:
+            q = generateDivisionQuestion(subjectConfig.spec, i, count);
+            break;
+          default:
+            throw new Error(`Unknown subject type: ${subjectType}`);
+        }
+        q.points = subjectConfig.pointsPerQuestion;
+        questions.push(q);
       }
-      q.points = subjectConfig.pointsPerQuestion;
-      questions.push(q);
     }
 
     subjectsData[subjectType] = {
       subjectId: subjectType,
       subjectName: subjectConfig.subjectName,
-      questionCount: count,
+      questionCount: questions.length,
       pointsPerQuestion: subjectConfig.pointsPerQuestion,
       totalPoints: subjectConfig.totalPoints,
-      questions
+      questions,
+      ...extraData
     };
 
-    totalQuestionsCount += count;
+    totalQuestionsCount += questions.length;
     totalPossibleScore += subjectConfig.totalPoints;
   }
 

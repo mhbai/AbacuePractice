@@ -23,7 +23,8 @@ export const EXAM_TYPES = {
 export const SUBJECT_TYPES = {
   ADD_SUB: 'ADD_SUB',         // 加減算 / 加減心算
   MULTIPLICATION: 'MULTIPLICATION', // 乘算 / 乘心算
-  DIVISION: 'DIVISION'        // 除算 / 除心算
+  DIVISION: 'DIVISION',        // 除算 / 除心算
+  CROSS_ADD_SUB: 'CROSS_ADD_SUB' // 縱橫列計算
 };
 
 /**
@@ -1370,6 +1371,141 @@ const ABACUS_CONFIG = {
             subtractionRatio: 0.0,
             digitDistribution: [
               { minDigits: 1, maxDigits: 2, weight: 1.0 }
+            ]
+          }
+        }
+      }
+    },
+
+    // -------------------------------------------------------------
+    // 第十一級 (Class 11)
+    // -------------------------------------------------------------
+    class_11: {
+      levelId: 'class_11',
+      levelName: '第十一級',
+      timeLimitSeconds: 600,
+      passCriteria: { minTotalScore: 100, totalPossible: 145 },
+      subjects: {
+        [SUBJECT_TYPES.ADD_SUB]: {
+          subjectId: SUBJECT_TYPES.ADD_SUB,
+          subjectName: '縱列加減算',
+          questionCount: 10,
+          pointsPerQuestion: 10,
+          totalPoints: 100,
+          spec: {
+            rows: 7,
+            hasDecimals: false,
+            hasCurrency: false,
+            subtractionRatio: 0.3,
+            digitDistribution: [
+              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 9, weight: 1.0 }
+            ]
+          }
+        },
+        [SUBJECT_TYPES.CROSS_ADD_SUB]: {
+          subjectId: SUBJECT_TYPES.CROSS_ADD_SUB,
+          subjectName: '縱橫列計算',
+          questionCount: 9,
+          pointsPerQuestion: 5,
+          totalPoints: 45,
+          spec: {
+            rows: 5,
+            cols: 4,
+            hasDecimals: false,
+            hasCurrency: false,
+            subtractionRatio: 0.25,
+            digitDistribution: [
+              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 9, weight: 1.0 }
+            ]
+          }
+        }
+      }
+    },
+
+    // -------------------------------------------------------------
+    // 第十二級 (Class 12)
+    // -------------------------------------------------------------
+    class_12: {
+      levelId: 'class_12',
+      levelName: '第十二級',
+      timeLimitSeconds: 600,
+      passCriteria: { minTotalScore: 100, totalPossible: 145 },
+      subjects: {
+        [SUBJECT_TYPES.ADD_SUB]: {
+          subjectId: SUBJECT_TYPES.ADD_SUB,
+          subjectName: '縱列加減算',
+          questionCount: 10,
+          pointsPerQuestion: 10,
+          totalPoints: 100,
+          spec: {
+            rows: 5,
+            hasDecimals: false,
+            hasCurrency: false,
+            subtractionRatio: 0.3,
+            digitDistribution: [
+              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 9, weight: 1.0 }
+            ]
+          }
+        },
+        [SUBJECT_TYPES.CROSS_ADD_SUB]: {
+          subjectId: SUBJECT_TYPES.CROSS_ADD_SUB,
+          subjectName: '縱橫列計算',
+          questionCount: 9,
+          pointsPerQuestion: 5,
+          totalPoints: 45,
+          spec: {
+            rows: 5,
+            cols: 4,
+            hasDecimals: false,
+            hasCurrency: false,
+            subtractionRatio: 0.25,
+            digitDistribution: [
+              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 9, weight: 1.0 }
+            ]
+          }
+        }
+      }
+    },
+
+    // -------------------------------------------------------------
+    // 準十二級 (Pre-Class 12)
+    // -------------------------------------------------------------
+    pre_class_12: {
+      levelId: 'pre_class_12',
+      levelName: '準十二級',
+      timeLimitSeconds: 600,
+      passCriteria: { minTotalScore: 100, totalPossible: 145 },
+      subjects: {
+        [SUBJECT_TYPES.ADD_SUB]: {
+          subjectId: SUBJECT_TYPES.ADD_SUB,
+          subjectName: '縱列加減算 (直覺運珠)',
+          questionCount: 10,
+          pointsPerQuestion: 10,
+          totalPoints: 100,
+          spec: {
+            rows: 4,
+            hasDecimals: false,
+            hasCurrency: false,
+            subtractionRatio: 0.25,
+            digitDistribution: [
+              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 7, weight: 1.0 }
+            ]
+          }
+        },
+        [SUBJECT_TYPES.CROSS_ADD_SUB]: {
+          subjectId: SUBJECT_TYPES.CROSS_ADD_SUB,
+          subjectName: '縱橫列計算',
+          questionCount: 9,
+          pointsPerQuestion: 5,
+          totalPoints: 45,
+          spec: {
+            rows: 5,
+            cols: 4,
+            hasDecimals: false,
+            hasCurrency: false,
+            subtractionRatio: 0.2,
+            digitDistribution: [
+              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 7, weight: 1.0 }
             ]
           }
         }
