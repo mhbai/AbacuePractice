@@ -208,19 +208,19 @@ class AppController {
   }
 
   /**
-   * 更新深淺主題圖示 (太陽 ☀️ / 月亮 🌙)
+   * 更新深淺主題圖示 (深色顯示月亮 🌙 / 淺色顯示太陽 ☀️)
    * @param {string} theme
    */
   updateThemeIcon(theme) {
     if (!this.dom.btnToggleTheme) return;
     if (theme === 'dark') {
-      this.dom.btnToggleTheme.textContent = '☀️';
-      this.dom.btnToggleTheme.title = '目前為深色模式，點擊切換為明亮試卷主題';
-      this.dom.btnToggleTheme.setAttribute('aria-label', '切換為明亮主題');
-    } else {
       this.dom.btnToggleTheme.textContent = '🌙';
-      this.dom.btnToggleTheme.title = '目前為淺色模式，點擊切換為深色夜間主題';
-      this.dom.btnToggleTheme.setAttribute('aria-label', '切換為深色主題');
+      this.dom.btnToggleTheme.title = '目前為深色夜間模式，點擊切換為明亮試卷主題';
+      this.dom.btnToggleTheme.setAttribute('aria-label', '目前為深色模式');
+    } else {
+      this.dom.btnToggleTheme.textContent = '☀️';
+      this.dom.btnToggleTheme.title = '目前為淺色試卷模式，點擊切換為深色夜間主題';
+      this.dom.btnToggleTheme.setAttribute('aria-label', '目前為淺色模式');
     }
   }
 
