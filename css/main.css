@@ -252,6 +252,16 @@ body {
   white-space: nowrap;
 }
 
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(80%);
+  pointer-events: none;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 .btn-primary {
   background-color: var(--primary);
   color: #ffffff;
