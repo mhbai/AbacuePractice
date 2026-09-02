@@ -109,9 +109,16 @@ class AppController {
       });
     }
 
-    // 開始測驗按鈕
+    // 開始 / 暫停 / 繼續測驗按鈕
     this.dom.btnStartExam.addEventListener('click', () => {
-      this.handleStartExam();
+      const { examStatus } = store.getState();
+      if (examStatus === 'IN_PROGRESS') {
+        this.handlePauseExam();
+      } else if (examStatus === 'PAUSED') {
+        this.handleResumeExam();
+      } else {
+        this.handleStartExam();
+      }
     });
 
     // 立即交卷按鈕
@@ -145,20 +152,51 @@ class AppController {
       this.updateThemeIcon(nextTheme);
     });
 
-    // 試卷委派事件 (輸入作答與即時批改、頁籤切換)
+    // 試卷委派事件：使用者輸入時儲存數值，並清除舊狀態（不打斷輸入）
     this.dom.examContainer.addEventListener('input', (e) => {
       if (e.target.classList.contains('quiz-answer-input')) {
         const sId = e.target.getAttribute('data-subject');
         const qNo = parseInt(e.target.getAttribute('data-qno'), 10);
         const val = e.target.value;
         store.setAnswer(sId, qNo, val);
-        this.handleInstantGradingOnInput(e.target, sId, qNo, val);
+
+        const container = e.target.closest('.ans-cell, .arithmetic-row, .td-cross-ans');
+        const auditCell = this.dom.examContainer.querySelector(`[data-subject="${sId}"][data-audit-qno="${qNo}"]`) || this.dom.examContainer.querySelector(`[data-audit-qno="${qNo}"]`);
+        if (container) container.classList.remove('ans-correct', 'ans-incorrect');
+        if (auditCell) {
+          auditCell.classList.remove('stamp-correct', 'stamp-wrong');
+          auditCell.innerHTML = '';
+          auditCell.removeAttribute('data-last-graded-val');
+        }
       }
     });
+
+    // 離開輸入框或按下 Enter/Tab 跳題時才審核答案並播放音效
+    this.dom.examContainer.addEventListener('change', (e) => {
+      if (e.target.classList.contains('quiz-answer-input')) {
+        const sId = e.target.getAttribute('data-subject');
+        const qNo = parseInt(e.target.getAttribute('data-qno'), 10);
+        const val = e.target.value;
+        this.handleInstantGradingOnCommit(e.target, sId, qNo, val);
+      }
+    });
+
+    this.dom.examContainer.addEventListener('blur', (e) => {
+      if (e.target.classList.contains('quiz-answer-input')) {
+        const sId = e.target.getAttribute('data-subject');
+        const qNo = parseInt(e.target.getAttribute('data-qno'), 10);
+        const val = e.target.value;
+        this.handleInstantGradingOnCommit(e.target, sId, qNo, val);
+      }
+    }, true);
 
     this.dom.examContainer.addEventListener('click', (e) => {
       if (e.target.closest('#btn-overlay-start')) {
         this.handleStartExam();
+        return;
+      }
+      if (e.target.closest('#btn-overlay-resume')) {
+        this.handleResumeExam();
         return;
       }
       const tabBtn = e.target.closest('[data-subject-tab]');
@@ -256,12 +294,13 @@ class AppController {
   }
 
   /**
-   * 處理單題即時批改與聲效提示 (即填即審模式)
+   * 處理單題送出時之即時批改與聲效提示 (即填即審模式：Enter / Tab / Blur 時觸發)
    */
-  handleInstantGradingOnInput(inputEl, sId, qNo, val) {
+  handleInstantGradingOnCommit(inputEl, sId, qNo, val) {
     const state = store.getState();
-    // 只有在即填即審模式且測驗尚未交卷時執行即時回饋
+    // 只有在即填即審模式且測驗進行中尚未交卷時執行即時回饋
     if (state.settings.gradingMode !== 'INSTANT' || state.lastReport) return;
+    if (state.examStatus !== 'IN_PROGRESS') return;
 
     const paper = state.currentPaper;
     const question = paper?.subjects[sId]?.questions?.find(item => item.questionNo === qNo);
@@ -275,9 +314,15 @@ class AppController {
       if (auditCell) {
         auditCell.classList.remove('stamp-correct', 'stamp-wrong');
         auditCell.innerHTML = '';
+        auditCell.removeAttribute('data-last-graded-val');
       }
       return;
     }
+
+    // 若此數值剛剛已經審核判定過，避免重覆播放提示音
+    const lastVal = auditCell ? auditCell.getAttribute('data-last-graded-val') : null;
+    if (lastVal === val) return;
+    if (auditCell) auditCell.setAttribute('data-last-graded-val', val);
 
     const result = gradeSingleQuestion(question, val);
     const soundEnabled = state.settings.soundEnabled;
@@ -312,6 +357,41 @@ class AppController {
   }
 
   /**
+   * 更新控制列所有按鈕與選單之啟用/停用/文字樣式狀態
+   * @param {'IDLE' | 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED'} status
+   */
+  updateControlBarForState(status) {
+    if (status === 'IN_PROGRESS') {
+      this.dom.btnStartExam.disabled = false;
+      this.dom.btnStartExam.innerHTML = '⏸️ 暫停測驗';
+      this.dom.btnStartExam.className = 'btn btn-warning';
+      this.dom.btnSubmitExam.disabled = false;
+      this.dom.selectExamType.disabled = true;
+      this.dom.selectLevel.disabled = true;
+      if (this.dom.selectGradingMode) this.dom.selectGradingMode.disabled = true;
+      this.dom.timerDisplay.classList.remove('timer-warning');
+    } else if (status === 'PAUSED') {
+      this.dom.btnStartExam.disabled = false;
+      this.dom.btnStartExam.innerHTML = '▶ 繼續測驗';
+      this.dom.btnStartExam.className = 'btn btn-primary';
+      this.dom.btnSubmitExam.disabled = false;
+      this.dom.selectExamType.disabled = true;
+      this.dom.selectLevel.disabled = true;
+      if (this.dom.selectGradingMode) this.dom.selectGradingMode.disabled = true;
+    } else {
+      // IDLE or COMPLETED
+      this.dom.btnStartExam.disabled = false;
+      this.dom.btnStartExam.innerHTML = status === 'COMPLETED' ? '▶ 重新測驗' : '▶ 開始測驗';
+      this.dom.btnStartExam.className = 'btn btn-primary';
+      this.dom.btnSubmitExam.disabled = true;
+      this.dom.selectExamType.disabled = false;
+      this.dom.selectLevel.disabled = false;
+      if (this.dom.selectGradingMode) this.dom.selectGradingMode.disabled = false;
+      this.dom.timerDisplay.classList.remove('timer-warning');
+    }
+  }
+
+  /**
    * 更新預設倒數計時器預覽數值
    */
   updateDefaultTimerPreview() {
@@ -333,6 +413,7 @@ class AppController {
     const paper = generateExamPaper(examType, levelId);
     store.setPreviewPaper(paper);
     store.setActiveSubject(preferredSubjectTab);
+    this.updateControlBarForState('IDLE');
     this.renderCurrentPaperView(preferredSubjectTab);
   }
 
@@ -349,12 +430,8 @@ class AppController {
     // 2. 寫入 Store
     store.startExam(paper);
 
-    // 3. 介面按鈕狀態切換
-    this.dom.btnStartExam.disabled = true;
-    this.dom.btnSubmitExam.disabled = false;
-    this.dom.selectExamType.disabled = true;
-    this.dom.selectLevel.disabled = true;
-    this.dom.timerDisplay.classList.remove('timer-warning');
+    // 3. 介面按鈕狀態切換 (開始按鈕轉為暫停按鈕)
+    this.updateControlBarForState('IN_PROGRESS');
 
     // 4. 渲染試卷並啟動鍵盤導航
     this.renderCurrentPaperView('ALL');
@@ -382,11 +459,40 @@ class AppController {
   }
 
   /**
+   * 暫停測驗流程
+   */
+  handlePauseExam() {
+    const state = store.getState();
+    if (state.examStatus !== 'IN_PROGRESS') return;
+
+    store.pauseExam();
+    if (this.timer) this.timer.pause();
+    this.keyboardNav.detach();
+    this.updateControlBarForState('PAUSED');
+    this.renderCurrentPaperView(state.activeSubjectId || 'ALL');
+  }
+
+  /**
+   * 繼續測驗流程
+   */
+  handleResumeExam() {
+    const state = store.getState();
+    if (state.examStatus !== 'PAUSED') return;
+
+    store.resumeExam();
+    if (this.timer) this.timer.resume();
+    this.updateControlBarForState('IN_PROGRESS');
+    this.renderCurrentPaperView(state.activeSubjectId || 'ALL');
+    this.keyboardNav.attach();
+    this.keyboardNav.focusFirstInput(true);
+  }
+
+  /**
    * 使用者手動點擊交卷或快捷鍵交卷
    */
   handleManualSubmit() {
     const state = store.getState();
-    if (state.examStatus !== 'IN_PROGRESS') return;
+    if (state.examStatus !== 'IN_PROGRESS' && state.examStatus !== 'PAUSED') return;
 
     const totalAns = Object.values(state.userAnswers).reduce((sum, obj) => sum + Object.keys(obj).length, 0);
     const totalQ = state.currentPaper.totalQuestionsCount;
@@ -418,11 +524,7 @@ class AppController {
     store.finishExam(report);
 
     // 3. 更新按鈕狀態
-    this.dom.btnStartExam.disabled = false;
-    this.dom.btnSubmitExam.disabled = true;
-    this.dom.selectExamType.disabled = false;
-    this.dom.selectLevel.disabled = false;
-    this.dom.timerDisplay.classList.remove('timer-warning');
+    this.updateControlBarForState('COMPLETED');
 
     // 4. 重新渲染試卷 (帶批改標記與標準答案，輸入框鎖定為唯讀)
     this.renderCurrentPaperView(state.activeSubjectId);

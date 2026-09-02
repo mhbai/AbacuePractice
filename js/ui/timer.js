@@ -197,6 +197,50 @@ export class ExamTimer {
     }
   }
 
+  pause() {
+    if (this.timerId) {
+      clearInterval(this.timerId);
+      this.timerId = null;
+      const now = performance.now();
+      const diffMs = Math.max(0, this.expectedEndTime - now);
+      this.remainingSeconds = Math.max(0, Math.ceil(diffMs / 1000));
+    }
+  }
+
+  resume() {
+    if (this.timerId || this.remainingSeconds <= 0) return;
+    this.startTime = performance.now();
+    this.expectedEndTime = this.startTime + this.remainingSeconds * 1000;
+    this.timerId = setInterval(() => {
+      const now = performance.now();
+      const diffMs = this.expectedEndTime - now;
+      const rem = Math.max(0, Math.ceil(diffMs / 1000));
+      const spent = this.totalSeconds - rem;
+
+      this.remainingSeconds = rem;
+      this.onTick(this.remainingSeconds, spent);
+
+      // 最後 30 秒警告
+      if (rem <= 30 && !this.isWarningTriggered) {
+        this.isWarningTriggered = true;
+        this.onWarning(rem);
+      }
+
+      // 最後 5 秒每秒嗶聲提示
+      if (rem <= 5 && rem > 0 && this.soundEnabled) {
+        soundEngine.playBeep(700, 0.08);
+      }
+
+      if (rem <= 0) {
+        this.stop();
+        if (this.soundEnabled) {
+          soundEngine.playFinishChime();
+        }
+        this.onTimeUp();
+      }
+    }, 250);
+  }
+
   getRemaining() {
     return this.remainingSeconds;
   }

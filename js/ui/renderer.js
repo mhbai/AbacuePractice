@@ -27,6 +27,7 @@ export class ExamRenderer {
     const isGraded = !!gradedResult;
     const isInstant = !!(gradedResult && gradedResult.isInstant);
     const isIdle = examStatus === 'IDLE';
+    const isPaused = examStatus === 'PAUSED';
     const isInputDisabled = examStatus !== 'IN_PROGRESS';
 
     const isMental = examType === 'MENTAL';
@@ -34,7 +35,7 @@ export class ExamRenderer {
     const mainSubtitle = isMental ? 'MENTAL CALCULATION EXAMINATION' : 'ABACUS CALCULATION EXAMINATION';
 
     let html = `
-      <div class="exam-sheet ${isGraded && !isInstant ? 'is-graded-sheet' : ''} ${isIdle ? 'is-idle-sheet' : ''}">
+      <div class="exam-sheet ${isGraded && !isInstant ? 'is-graded-sheet' : ''} ${isIdle || isPaused ? 'is-idle-sheet' : ''}">
         <!-- 試卷標頭 -->
         <header class="exam-sheet-header">
           <div class="exam-header-main">
@@ -99,6 +100,19 @@ export class ExamRenderer {
             <p class="glass-desc">請確認上方「測驗項目」、「報考級別」與「批改模式」後，點擊開始測驗。</p>
             <button class="btn btn-primary btn-glass-start" id="btn-overlay-start">
               ▶ 立即開始測驗 (限時 ${Math.floor(timeLimitSeconds / 60)} 分鐘)
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (isPaused) {
+      html += `
+        <div class="exam-idle-glass-overlay exam-paused-overlay">
+          <div class="glass-prompt-card">
+            <div class="glass-icon">⏸️</div>
+            <h3 class="glass-title">測驗已暫停</h3>
+            <p class="glass-desc">已為您暫停倒數計時，點擊下方或上方按鈕即可繼續作答。</p>
+            <button class="btn btn-primary btn-glass-start" id="btn-overlay-resume">
+              ▶ 繼續測驗
             </button>
           </div>
         </div>

@@ -281,6 +281,15 @@ body {
   filter: brightness(1.1);
 }
 
+.btn-warning {
+  background-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn-warning:hover {
+  filter: brightness(1.1);
+}
+
 .btn-danger-outline {
   background: transparent;
   color: var(--color-wrong);

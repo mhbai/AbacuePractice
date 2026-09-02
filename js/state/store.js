@@ -124,6 +124,26 @@ class Store {
   }
 
   /**
+   * 暫停測驗
+   */
+  pauseExam() {
+    if (this.state.examStatus === 'IN_PROGRESS') {
+      this.state.examStatus = 'PAUSED';
+      this.notify('pauseExam');
+    }
+  }
+
+  /**
+   * 繼續測驗
+   */
+  resumeExam() {
+    if (this.state.examStatus === 'PAUSED') {
+      this.state.examStatus = 'IN_PROGRESS';
+      this.notify('resumeExam');
+    }
+  }
+
+  /**
    * 完成測驗並儲存成績單
    */
   finishExam(report) {
