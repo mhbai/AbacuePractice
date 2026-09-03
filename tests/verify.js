@@ -51,6 +51,36 @@ async function runTests() {
                 throw new Error(`加減算非負約束違反！${type}/${lvl.levelId}/第${q.questionNo}題/第${rIdx + 1}筆: 累計總和 = ${runningSum}`);
               }
             }
+
+            // 驗證直覺運珠 (無十進位、無五湊進、無借退位約束)
+            if (addSub.spec?.directBeadsOnly || addSub.spec?.noCarry) {
+              if (q.standardAnswer > 9 || q.standardAnswer < 1) {
+                throw new Error(`直覺運珠答案超出範圍！${type}/${lvl.levelId}/第${q.questionNo}題: 答案 = ${q.standardAnswer}`);
+              }
+              let simSum = 0;
+              for (const row of q.rows) {
+                const val = Math.abs(row.rawVal);
+                if (row.rawVal > 0) {
+                  const curL = simSum % 5;
+                  const curU = Math.floor(simSum / 5);
+                  const addL = val % 5;
+                  const addU = Math.floor(val / 5);
+                  if (curL + addL > 4 || curU + addU > 1) {
+                    throw new Error(`直覺運珠加法違反無進位/湊五約束！${type}/${lvl.levelId}/第${q.questionNo}題: 當前 ${simSum}, 加上 ${val}`);
+                  }
+                  simSum += val;
+                } else {
+                  const curL = simSum % 5;
+                  const curU = Math.floor(simSum / 5);
+                  const subL = val % 5;
+                  const subU = Math.floor(val / 5);
+                  if (curL < subL || curU < subU) {
+                    throw new Error(`直覺運珠減法違反無退位/借位約束！${type}/${lvl.levelId}/第${q.questionNo}題: 當前 ${simSum}, 減去 ${val}`);
+                  }
+                  simSum -= val;
+                }
+              }
+            }
           }
         }
 

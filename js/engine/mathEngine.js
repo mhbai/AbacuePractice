@@ -90,12 +90,141 @@ export function formatNumber(val, options = {}) {
 }
 
 /**
+ * 取得直覺運珠 (無十進位、無五湊進) 之加法可用候選數字列表 (1 ~ 9)
+ * @param {number} currentSum - 當前累計總和 (0 ~ 9)
+ * @returns {number[]}
+ */
+export function getValidDirectAddCandidates(currentSum) {
+  const curL = currentSum % 5;
+  const curU = Math.floor(currentSum / 5);
+  const maxAddL = 4 - curL;
+  const maxAddU = 1 - curU;
+
+  const candidates = [];
+  for (let u = 0; u <= maxAddU; u++) {
+    for (let l = 0; l <= maxAddL; l++) {
+      const d = u * 5 + l;
+      if (d >= 1 && d <= 9 && (currentSum + d) <= 9) {
+        candidates.push(d);
+      }
+    }
+  }
+  return candidates;
+}
+
+/**
+ * 取得直覺運珠 (無十退位、無五借退) 之減法可用候選數字列表 (1 ~ 9)
+ * @param {number} currentSum - 當前累計總和 (1 ~ 9)
+ * @returns {number[]}
+ */
+export function getValidDirectSubCandidates(currentSum) {
+  const curL = currentSum % 5;
+  const curU = Math.floor(currentSum / 5);
+
+  const candidates = [];
+  for (let u = 0; u <= curU; u++) {
+    for (let l = 0; l <= curL; l++) {
+      const d = u * 5 + l;
+      if (d >= 1 && (currentSum - d) >= 1) {
+        candidates.push(d);
+      }
+    }
+  }
+  return candidates;
+}
+
+/**
+ * 直覺運珠題目生成器 (100% 保證直加直減，無十進位、無五湊進、無退位)
+ * @param {object} spec
+ * @param {number} questionNo
+ * @returns {object}
+ */
+export function generateDirectBeadsQuestion(spec, questionNo) {
+  const { rows = 3, subtractionRatio = 0.0, hasCurrency = false } = spec;
+
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const numbers = [];
+    let runningSum = 0;
+    let success = true;
+
+    for (let r = 0; r < rows; r++) {
+      const isFirst = r === 0;
+      const wantSubtract = !isFirst && subtractionRatio > 0 && Math.random() < subtractionRatio;
+
+      if (wantSubtract && runningSum >= 2) {
+        const subCandidates = getValidDirectSubCandidates(runningSum);
+        if (subCandidates.length > 0) {
+          const baseVal = getRandomChoice(subCandidates);
+          runningSum -= baseVal;
+          numbers.push({
+            rawVal: -baseVal,
+            isNegative: true,
+            display: formatNumber(-baseVal, { hasCurrency: false, decimalPlaces: 0 })
+          });
+          continue;
+        }
+      }
+
+      // 進行直加
+      const addCandidates = getValidDirectAddCandidates(runningSum);
+      if (addCandidates.length === 0) {
+        success = false;
+        break;
+      }
+
+      const remainingRows = rows - 1 - r;
+      let filtered = addCandidates;
+      if (remainingRows > 0) {
+        const safe = addCandidates.filter(d => {
+          const nextSum = runningSum + d;
+          const nextL = nextSum % 5;
+          const nextU = Math.floor(nextSum / 5);
+          return (4 - nextL) + (1 - nextU) >= 1;
+        });
+        if (safe.length > 0) filtered = safe;
+      }
+
+      const baseVal = getRandomChoice(filtered);
+      runningSum += baseVal;
+      numbers.push({
+        rawVal: baseVal,
+        isNegative: false,
+        display: formatNumber(baseVal, { hasCurrency: isFirst && hasCurrency, decimalPlaces: 0 })
+      });
+    }
+
+    if (success && numbers.length === rows) {
+      const finalAnswer = runningSum;
+      return {
+        id: `addsub_${questionNo}`,
+        questionNo,
+        type: SUBJECT_TYPES.ADD_SUB,
+        rows: numbers,
+        hasCurrency,
+        hasDecimals: false,
+        decimalPlaces: 0,
+        standardAnswer: finalAnswer,
+        answerFormatted: formatNumber(finalAnswer, { hasCurrency, decimalPlaces: 0 }),
+        spec
+      };
+    }
+  }
+
+  // Fallback
+  return generateAddSubQuestion({ ...spec, directBeadsOnly: false, noCarry: false }, questionNo);
+}
+
+/**
  * 加減算題目生成器 (支援非負累計約束)
  * @param {object} spec
  * @param {number} questionNo
  * @returns {object}
  */
 export function generateAddSubQuestion(spec, questionNo) {
+  if (spec.directBeadsOnly || spec.noCarry) {
+    return generateDirectBeadsQuestion(spec, questionNo);
+  }
+
   const {
     rows = 10,
     hasDecimals = false,

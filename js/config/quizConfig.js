@@ -764,11 +764,13 @@ const MENTAL_CONFIG = {
           totalPoints: 100,
           spec: {
             rows: 3,
+            directBeadsOnly: true,
+            noCarry: true,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.0,
             digitDistribution: [
-              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 6, weight: 1.0 }
+              { minDigits: 1, maxDigits: 1, weight: 1.0 }
             ]
           }
         }
@@ -1484,11 +1486,13 @@ const ABACUS_CONFIG = {
           totalPoints: 100,
           spec: {
             rows: 4,
+            directBeadsOnly: true,
+            noCarry: true,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.25,
             digitDistribution: [
-              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 7, weight: 1.0 }
+              { minDigits: 1, maxDigits: 1, weight: 1.0 }
             ]
           }
         },
