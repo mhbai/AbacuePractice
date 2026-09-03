@@ -231,90 +231,109 @@ export function generateAddSubQuestion(spec, questionNo) {
     decimalPlaces = 2,
     hasCurrency = false,
     subtractionRatio = 0.3,
+    requireCarry = false,
+    minSum = null,
     digitDistribution = [{ minDigits: 2, maxDigits: 3, weight: 1.0 }]
   } = spec;
 
-  const numbers = [];
-  let runningSum = 0;
+  const maxAttempts = requireCarry ? 150 : 1;
 
-  for (let r = 0; r < rows; r++) {
-    // 依權重決定本筆位數
-    const dist = getRandomChoice(digitDistribution);
-    const digits = getRandomInt(dist.minDigits, dist.maxDigits);
-    const minVal = dist.minVal || null;
-    const maxVal = dist.maxVal || null;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const numbers = [];
+    let runningSum = 0;
+    let hasCarryOccurred = false;
 
-    let baseVal = getRandomIntWithDigits(digits, minVal, maxVal);
+    for (let r = 0; r < rows; r++) {
+      // 依權重決定本筆位數
+      const dist = getRandomChoice(digitDistribution);
+      const digits = getRandomInt(dist.minDigits, dist.maxDigits);
+      const minVal = dist.minVal || null;
+      const maxVal = dist.maxVal || null;
 
-    if (hasDecimals) {
-      // 產生帶小數的數字 (例如小數點後 2 位)
-      // 若 digits = 3，如 24.50 或 2.48
-      const decimalFactor = Math.pow(10, decimalPlaces);
-      baseVal = baseVal / decimalFactor;
-      // 確保不是純 0
-      if (baseVal === 0) baseVal = 1 / decimalFactor;
-    }
+      let baseVal = getRandomIntWithDigits(digits, minVal, maxVal);
 
-    // 決定是否為減法 (第 1 筆永遠為正數)
-    const canSubtract = r > 0 && subtractionRatio > 0 && Math.random() < subtractionRatio;
-
-    if (canSubtract) {
-      // 非負約束：減數必須嚴格小於當前累計總和 (runningSum - baseVal > 0)
-      if (baseVal >= runningSum) {
-        // 若減數過大，調整減數為 runningSum 的 20%~80%
-        if (hasDecimals) {
-          const maxAllowed = roundToDecimals(runningSum * (0.3 + Math.random() * 0.5), decimalPlaces);
-          baseVal = Math.max(0.01, maxAllowed);
-        } else {
-          const maxAllowed = Math.floor(runningSum * (0.3 + Math.random() * 0.5));
-          baseVal = Math.max(1, maxAllowed);
-        }
+      if (hasDecimals) {
+        // 產生帶小數的數字 (例如小數點後 2 位)
+        const decimalFactor = Math.pow(10, decimalPlaces);
+        baseVal = baseVal / decimalFactor;
+        // 確保不是純 0
+        if (baseVal === 0) baseVal = 1 / decimalFactor;
       }
 
-      // 雙重保證：累計必大於 0
-      if (runningSum - baseVal <= 0) {
-        // 若依然無法相減，轉為加法
+      // 決定是否為減法 (第 1 筆永遠為正數)
+      const canSubtract = r > 0 && subtractionRatio > 0 && Math.random() < subtractionRatio;
+
+      if (canSubtract) {
+        // 非負約束：減數必須嚴格小於當前累計總和 (runningSum - baseVal > 0)
+        if (baseVal >= runningSum) {
+          if (hasDecimals) {
+            const maxAllowed = roundToDecimals(runningSum * (0.3 + Math.random() * 0.5), decimalPlaces);
+            baseVal = Math.max(0.01, maxAllowed);
+          } else {
+            const maxAllowed = Math.floor(runningSum * (0.3 + Math.random() * 0.5));
+            baseVal = Math.max(1, maxAllowed);
+          }
+        }
+
+        // 雙重保證：累計必大於 0
+        if (runningSum - baseVal <= 0) {
+          if (r > 0 && ((runningSum % 10) + (baseVal % 10) >= 10 || (runningSum + baseVal) >= 10)) {
+            hasCarryOccurred = true;
+          }
+          runningSum = roundToDecimals(runningSum + baseVal, decimalPlaces);
+          numbers.push({
+            rawVal: baseVal,
+            isNegative: false,
+            display: formatNumber(baseVal, { hasCurrency: r === 0 && hasCurrency, decimalPlaces: hasDecimals ? decimalPlaces : 0 })
+          });
+        } else {
+          runningSum = roundToDecimals(runningSum - baseVal, decimalPlaces);
+          numbers.push({
+            rawVal: -baseVal,
+            isNegative: true,
+            display: formatNumber(-baseVal, { hasCurrency: false, decimalPlaces: hasDecimals ? decimalPlaces : 0 })
+          });
+        }
+      } else {
+        // 加法
+        if (r > 0 && ((runningSum % 10) + (baseVal % 10) >= 10 || (runningSum + baseVal) >= 10)) {
+          hasCarryOccurred = true;
+        }
         runningSum = roundToDecimals(runningSum + baseVal, decimalPlaces);
         numbers.push({
           rawVal: baseVal,
           isNegative: false,
           display: formatNumber(baseVal, { hasCurrency: r === 0 && hasCurrency, decimalPlaces: hasDecimals ? decimalPlaces : 0 })
         });
-      } else {
-        runningSum = roundToDecimals(runningSum - baseVal, decimalPlaces);
-        numbers.push({
-          rawVal: -baseVal,
-          isNegative: true,
-          display: formatNumber(-baseVal, { hasCurrency: false, decimalPlaces: hasDecimals ? decimalPlaces : 0 })
-        });
       }
-    } else {
-      // 加法
-      runningSum = roundToDecimals(runningSum + baseVal, decimalPlaces);
-      numbers.push({
-        rawVal: baseVal,
-        isNegative: false,
-        display: formatNumber(baseVal, { hasCurrency: r === 0 && hasCurrency, decimalPlaces: hasDecimals ? decimalPlaces : 0 })
-      });
     }
+
+    if (requireCarry) {
+      if (!hasCarryOccurred && runningSum < 10) {
+        continue;
+      }
+      if (minSum !== null && runningSum < minSum) {
+        continue;
+      }
+    }
+
+    // 計算標準答案
+    const finalAnswer = runningSum;
+    const answerFormatted = formatNumber(finalAnswer, { hasCurrency, decimalPlaces: hasDecimals ? decimalPlaces : 0 });
+
+    return {
+      id: `addsub_${questionNo}`,
+      questionNo,
+      type: SUBJECT_TYPES.ADD_SUB,
+      rows: numbers,
+      hasCurrency,
+      hasDecimals,
+      decimalPlaces: hasDecimals ? decimalPlaces : 0,
+      standardAnswer: finalAnswer,
+      answerFormatted,
+      spec
+    };
   }
-
-  // 計算標準答案
-  const finalAnswer = runningSum;
-  const answerFormatted = formatNumber(finalAnswer, { hasCurrency, decimalPlaces: hasDecimals ? decimalPlaces : 0 });
-
-  return {
-    id: `addsub_${questionNo}`,
-    questionNo,
-    type: SUBJECT_TYPES.ADD_SUB,
-    rows: numbers,
-    hasCurrency,
-    hasDecimals,
-    decimalPlaces: hasDecimals ? decimalPlaces : 0,
-    standardAnswer: finalAnswer,
-    answerFormatted,
-    spec
-  };
 }
 
 /**

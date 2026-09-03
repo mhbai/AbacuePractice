@@ -708,6 +708,8 @@ const MENTAL_CONFIG = {
           totalPoints: 100,
           spec: {
             rows: 3,
+            requireCarry: true,
+            minSum: 10,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.0,
@@ -736,6 +738,8 @@ const MENTAL_CONFIG = {
           totalPoints: 100,
           spec: {
             rows: 3,
+            requireCarry: true,
+            minSum: 10,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.0,
