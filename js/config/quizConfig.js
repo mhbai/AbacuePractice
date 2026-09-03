@@ -640,9 +640,9 @@ const MENTAL_CONFIG = {
             rows: 4,
             hasDecimals: false,
             hasCurrency: false,
-            subtractionRatio: 0.2,
+            subtractionRatio: 0.25,
             digitDistribution: [
-              { minDigits: 1, maxDigits: 2, weight: 1.0 }
+              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 9, weight: 1.0 }
             ]
           }
         },
@@ -679,12 +679,12 @@ const MENTAL_CONFIG = {
           totalPoints: 100,
           spec: {
             rows: 4,
+            requireCarry: true,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.0,
             digitDistribution: [
-              { minDigits: 1, maxDigits: 1, weight: 0.8 },
-              { minDigits: 2, maxDigits: 2, weight: 0.2 }
+              { minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 9, weight: 1.0 }
             ]
           }
         }
