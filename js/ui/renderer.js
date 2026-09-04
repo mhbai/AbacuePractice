@@ -110,10 +110,15 @@ export class ExamRenderer {
           <div class="glass-prompt-card">
             <div class="glass-icon">⏸️</div>
             <h3 class="glass-title">測驗已暫停</h3>
-            <p class="glass-desc">已為您暫停倒數計時，點擊下方或上方按鈕即可繼續作答。</p>
-            <button class="btn btn-primary btn-glass-start" id="btn-overlay-resume">
-              ▶ 繼續測驗
-            </button>
+            <p class="glass-desc">已為您暫停倒數計時，您可以隨時繼續作答或中止測驗。</p>
+            <div class="glass-btn-group" style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;">
+              <button class="btn btn-primary btn-glass-start" id="btn-overlay-resume">
+                ▶ 繼續測驗
+              </button>
+              <button class="btn btn-danger btn-glass-stop" id="btn-overlay-stop">
+                🛑 停止測驗
+              </button>
+            </div>
           </div>
         </div>
       `;

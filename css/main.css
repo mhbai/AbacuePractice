@@ -300,6 +300,15 @@ body {
   filter: brightness(1.1);
 }
 
+.btn-danger {
+  background-color: var(--color-wrong);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  filter: brightness(1.1);
+}
+
 .btn-danger-outline {
   background: transparent;
   color: var(--color-wrong);

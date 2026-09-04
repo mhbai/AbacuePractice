@@ -19,6 +19,7 @@ class AppController {
       selectLevel: document.getElementById('select-level'),
       selectGradingMode: document.getElementById('select-grading-mode'),
       btnStartExam: document.getElementById('btn-start-exam'),
+      btnStopExam: document.getElementById('btn-stop-exam'),
       btnSubmitExam: document.getElementById('btn-submit-exam'),
       timerDigits: document.getElementById('timer-digits'),
       timerDisplay: document.getElementById('timer-display'),
@@ -121,6 +122,13 @@ class AppController {
       }
     });
 
+    // 停止測驗按鈕
+    if (this.dom.btnStopExam) {
+      this.dom.btnStopExam.addEventListener('click', () => {
+        this.handleStopExam();
+      });
+    }
+
     // 立即交卷按鈕
     this.dom.btnSubmitExam.addEventListener('click', () => {
       this.handleManualSubmit();
@@ -197,6 +205,10 @@ class AppController {
       }
       if (e.target.closest('#btn-overlay-resume')) {
         this.handleResumeExam();
+        return;
+      }
+      if (e.target.closest('#btn-overlay-stop')) {
+        this.handleStopExam();
         return;
       }
       const tabBtn = e.target.closest('[data-subject-tab]');
@@ -365,6 +377,10 @@ class AppController {
       this.dom.btnStartExam.disabled = false;
       this.dom.btnStartExam.innerHTML = '⏸️ 暫停測驗';
       this.dom.btnStartExam.className = 'btn btn-warning';
+      if (this.dom.btnStopExam) {
+        this.dom.btnStopExam.disabled = false;
+        this.dom.btnStopExam.className = 'btn btn-danger';
+      }
       this.dom.btnSubmitExam.disabled = false;
       this.dom.selectExamType.disabled = true;
       this.dom.selectLevel.disabled = true;
@@ -374,6 +390,10 @@ class AppController {
       this.dom.btnStartExam.disabled = false;
       this.dom.btnStartExam.innerHTML = '▶ 繼續測驗';
       this.dom.btnStartExam.className = 'btn btn-primary';
+      if (this.dom.btnStopExam) {
+        this.dom.btnStopExam.disabled = false;
+        this.dom.btnStopExam.className = 'btn btn-danger';
+      }
       this.dom.btnSubmitExam.disabled = false;
       this.dom.selectExamType.disabled = true;
       this.dom.selectLevel.disabled = true;
@@ -383,6 +403,10 @@ class AppController {
       this.dom.btnStartExam.disabled = false;
       this.dom.btnStartExam.innerHTML = status === 'COMPLETED' ? '▶ 重新測驗' : '▶ 開始測驗';
       this.dom.btnStartExam.className = 'btn btn-primary';
+      if (this.dom.btnStopExam) {
+        this.dom.btnStopExam.disabled = true;
+        this.dom.btnStopExam.className = 'btn btn-danger';
+      }
       this.dom.btnSubmitExam.disabled = true;
       this.dom.selectExamType.disabled = false;
       this.dom.selectLevel.disabled = false;
@@ -413,6 +437,7 @@ class AppController {
     const paper = generateExamPaper(examType, levelId);
     store.setPreviewPaper(paper);
     store.setActiveSubject(preferredSubjectTab);
+    this.updateDefaultTimerPreview();
     this.updateControlBarForState('IDLE');
     this.renderCurrentPaperView(preferredSubjectTab);
   }
@@ -470,6 +495,23 @@ class AppController {
     this.keyboardNav.detach();
     this.updateControlBarForState('PAUSED');
     this.renderCurrentPaperView(state.activeSubjectId || 'ALL');
+  }
+
+  /**
+   * 停止測驗流程 (中止作答並重設試卷回到準備狀態)
+   */
+  handleStopExam() {
+    const state = store.getState();
+    if (state.examStatus !== 'IN_PROGRESS' && state.examStatus !== 'PAUSED') return;
+
+    const confirmed = window.confirm('確定要停止當前測驗嗎？\n停止後將會中止作答並重設試卷。');
+    if (!confirmed) return;
+
+    if (this.timer) {
+      this.timer.stop();
+    }
+    this.keyboardNav.detach();
+    this.prepareInitialView(state.activeSubjectId || 'ALL');
   }
 
   /**
