@@ -211,11 +211,6 @@ class AppController {
         this.handleStopExam();
         return;
       }
-      const tabBtn = e.target.closest('[data-subject-tab]');
-      if (tabBtn) {
-        const targetTab = tabBtn.getAttribute('data-subject-tab');
-        this.switchSubjectTab(targetTab);
-      }
     });
   }
 
@@ -290,16 +285,16 @@ class AppController {
   }
 
   /**
-   * 統一渲染當前試卷視圖
+   * 統一渲染當前試卷視圖 (直接完整呈現所有科目)
    */
-  renderCurrentPaperView(tab = store.getState().activeSubjectId || 'ALL') {
+  renderCurrentPaperView() {
     const state = store.getState();
     if (!state.currentPaper) return;
     const instantGraded = this.getInstantGradedMap(state.currentPaper, state.userAnswers);
     this.renderer.renderPaper(
       state.currentPaper,
       state.userAnswers,
-      tab,
+      'ALL',
       state.lastReport || instantGraded,
       state.examStatus
     );
@@ -428,18 +423,16 @@ class AppController {
   }
 
   /**
-   * 準備初始預覽試卷 (同步記錄於 store 中，避免切換頁籤時題目丟失)
-   * @param {string} [preferredSubjectTab='ALL']
+   * 準備初始預覽試卷 (同步記錄於 store 中)
    */
-  prepareInitialView(preferredSubjectTab = 'ALL') {
+  prepareInitialView() {
     const examType = this.dom.selectExamType.value;
     const levelId = this.dom.selectLevel.value;
     const paper = generateExamPaper(examType, levelId);
     store.setPreviewPaper(paper);
-    store.setActiveSubject(preferredSubjectTab);
     this.updateDefaultTimerPreview();
     this.updateControlBarForState('IDLE');
-    this.renderCurrentPaperView(preferredSubjectTab);
+    this.renderCurrentPaperView();
   }
 
   /**
@@ -459,7 +452,7 @@ class AppController {
     this.updateControlBarForState('IN_PROGRESS');
 
     // 4. 渲染試卷並啟動鍵盤導航
-    this.renderCurrentPaperView('ALL');
+    this.renderCurrentPaperView();
     this.keyboardNav.attach();
     this.keyboardNav.focusFirstInput(true);
 
@@ -494,7 +487,7 @@ class AppController {
     if (this.timer) this.timer.pause();
     this.keyboardNav.detach();
     this.updateControlBarForState('PAUSED');
-    this.renderCurrentPaperView(state.activeSubjectId || 'ALL');
+    this.renderCurrentPaperView();
   }
 
   /**
@@ -511,7 +504,7 @@ class AppController {
       this.timer.stop();
     }
     this.keyboardNav.detach();
-    this.prepareInitialView(state.activeSubjectId || 'ALL');
+    this.prepareInitialView();
   }
 
   /**
@@ -524,7 +517,7 @@ class AppController {
     store.resumeExam();
     if (this.timer) this.timer.resume();
     this.updateControlBarForState('IN_PROGRESS');
-    this.renderCurrentPaperView(state.activeSubjectId || 'ALL');
+    this.renderCurrentPaperView();
     this.keyboardNav.attach();
     this.keyboardNav.focusFirstInput(true);
   }
@@ -569,7 +562,7 @@ class AppController {
     this.updateControlBarForState('COMPLETED');
 
     // 4. 重新渲染試卷 (帶批改標記與標準答案，輸入框鎖定為唯讀)
-    this.renderCurrentPaperView(state.activeSubjectId);
+    this.renderCurrentPaperView();
 
     // 5. 彈出成績單
     this.reportView.showReportModal(report, {
@@ -580,23 +573,6 @@ class AppController {
         this.handleStartExam();
       }
     });
-  }
-
-  /**
-   * 切換科目頁籤
-   */
-  switchSubjectTab(subjectId) {
-    let state = store.getState();
-    if (!state.currentPaper) {
-      this.prepareInitialView(subjectId);
-      state = store.getState();
-    } else {
-      store.setActiveSubject(subjectId);
-      this.renderCurrentPaperView(subjectId);
-    }
-    if (state.examStatus === 'IN_PROGRESS') {
-      this.keyboardNav.focusFirstInput(true);
-    }
   }
 
   /**

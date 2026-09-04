@@ -62,33 +62,7 @@ export class ExamRenderer {
           </div>
         </header>
 
-        <!-- 試卷科目切換頁籤 -->
-        <nav class="subject-tabs-nav" role="tablist">
-          <button class="subj-tab-btn ${activeSubjectId === 'ALL' || !activeSubjectId ? 'active' : ''}" data-subject-tab="ALL">
-            <i class="icon-all"></i> 整卷全覽
-          </button>
-    `;
-
-    for (const [sId, sData] of Object.entries(subjects)) {
-      const isCurrentActive = activeSubjectId === sId;
-      const count = sData.questionCount;
-      const answeredCount = Object.keys(userAnswers[sId] || {}).filter(k => String(userAnswers[sId][k]).trim() !== '').length;
-
-      let scoreBadge = '';
-      if (isGraded && !isInstant && gradedResult.subjects[sId]) {
-        scoreBadge = `<span class="tab-score-badge">${gradedResult.subjects[sId].earnedPoints}/${sData.totalPoints}分</span>`;
-      } else {
-        scoreBadge = `<span class="tab-progress-badge">${answeredCount}/${count}</span>`;
-      }
-
-      html += `
-        <button class="subj-tab-btn ${isCurrentActive ? 'active' : ''}" data-subject-tab="${sId}">
-          ${sData.subjectName} (${sData.totalPoints}分) ${scoreBadge}
-        </button>
-      `;
-    }
-
-    html += `</nav><div class="exam-sheet-body-wrapper">`;
+        <div class="exam-sheet-body-wrapper">
 
     // 若未開始測驗，渲染毛玻璃遮罩與提示卡片
     if (isIdle) {
@@ -126,11 +100,8 @@ export class ExamRenderer {
 
     html += `<div class="exam-sheet-body">`;
 
-    // 渲染各科目內容
+    // 依序直接呈現所有科目內容
     for (const [sId, sData] of Object.entries(subjects)) {
-      const isVisible = (activeSubjectId === 'ALL' || !activeSubjectId) || (activeSubjectId === sId);
-      if (!isVisible) continue;
-
       const gradedSubject = isGraded && gradedResult.subjects[sId] ? { ...gradedResult.subjects[sId], isInstant } : null;
 
       html += `
