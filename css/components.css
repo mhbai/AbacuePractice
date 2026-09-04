@@ -1,7 +1,181 @@
-/**
- * @file components.css
- * @description 彈窗、成績單面板、證書勳章、歷史紀錄抽屜與提示樣式
- */
+/* -------------------------------------------------------------
+   試卷內嵌成績結算看板 (On-Paper Score Report Banner)
+   ------------------------------------------------------------- */
+.exam-report-banner {
+  background: var(--bg-card);
+  border: 2px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  margin-bottom: 2rem;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  animation: slideInDown 0.3s ease-out;
+}
+
+.exam-report-banner.banner-passed {
+  border-color: var(--color-correct);
+  background: linear-gradient(to bottom, rgba(46, 125, 50, 0.08), var(--bg-card));
+}
+
+.exam-report-banner.banner-failed {
+  border-color: var(--color-wrong);
+  background: linear-gradient(to bottom, rgba(198, 40, 40, 0.08), var(--bg-card));
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.report-banner-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.banner-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.banner-icon {
+  font-size: 2.2rem;
+  width: 56px;
+  height: 56px;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.banner-passed .banner-icon {
+  border-color: var(--color-correct);
+}
+
+.banner-failed .banner-icon {
+  border-color: var(--color-wrong);
+}
+
+.banner-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 0.2rem;
+}
+
+.banner-eval {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.banner-passed .banner-eval {
+  color: var(--color-correct);
+}
+
+.banner-failed .banner-eval {
+  color: var(--color-wrong);
+}
+
+.banner-next {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.banner-stats-row {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.banner-stat-item {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1rem;
+  min-width: 100px;
+}
+
+.bstat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.bstat-val {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.bstat-val small {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.stat-score .bstat-val {
+  color: var(--primary);
+}
+
+.report-banner-subjects {
+  margin-bottom: 1.25rem;
+}
+
+.banner-subjs-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.banner-subjs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.banner-subj-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+}
+
+.banner-subj-top {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+}
+
+.banner-subj-bottom {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.report-banner-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
 
 /* 彈窗遮罩與外框 */
 .modal-backdrop {

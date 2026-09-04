@@ -211,6 +211,14 @@ class AppController {
         this.handleStopExam();
         return;
       }
+      if (e.target.closest('#btn-banner-retry')) {
+        this.handleStartExam();
+        return;
+      }
+      if (e.target.closest('#btn-banner-print')) {
+        window.print();
+        return;
+      }
     });
   }
 
@@ -542,7 +550,7 @@ class AppController {
   }
 
   /**
-   * 結束測驗並自動批改評分
+   * 結束測驗並自動批改評分 (成績單直接內嵌顯示在試卷頂部)
    * @param {boolean} isTimeUp
    */
   finishExamAndGrade(isTimeUp = false) {
@@ -555,24 +563,26 @@ class AppController {
     // 1. 自動評分
     const report = gradeExamPaper(state.currentPaper, state.userAnswers, timeSpent);
 
-    // 2. 儲存報告
+    // 2. 儲存報告至 store 與 history
     store.finishExam(report);
 
-    // 3. 更新按鈕狀態
+    // 3. 更新控制列按鈕狀態 (開始按鈕轉為重新測驗)
     this.updateControlBarForState('COMPLETED');
 
-    // 4. 重新渲染試卷 (帶批改標記與標準答案，輸入框鎖定為唯讀)
+    // 4. 重新渲染試卷 (頂部內嵌成績單看板，下方標記所有題目作答與硃筆批改，輸入框鎖定為唯讀)
     this.renderCurrentPaperView();
 
-    // 5. 彈出成績單
-    this.reportView.showReportModal(report, {
-      onReview: () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      },
-      onRetry: () => {
-        this.handleStartExam();
+    // 5. 播放交卷/及格音效
+    if (state.settings.soundEnabled) {
+      if (report.evaluation.isPassed) {
+        soundEngine.playCorrectSound();
+      } else {
+        soundEngine.playExamFinished();
       }
-    });
+    }
+
+    // 6. 平滑捲動至試卷頂端，讓受試者立即檢閱成績結算看板與錯題
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /**

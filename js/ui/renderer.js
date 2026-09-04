@@ -63,6 +63,7 @@ export class ExamRenderer {
         </header>
 
         <div class="exam-sheet-body-wrapper">
+    `;
 
     // 若未開始測驗，渲染毛玻璃遮罩與提示卡片
     if (isIdle) {
@@ -99,6 +100,11 @@ export class ExamRenderer {
     }
 
     html += `<div class="exam-sheet-body">`;
+
+    // 若已完成交卷評分，在試卷頂部直接內嵌成績結算看板
+    if (isGraded && !isInstant && gradedResult) {
+      html += this.renderOnPaperScoreBanner(gradedResult, examPaper);
+    }
 
     // 依序直接呈現所有科目內容
     for (const [sId, sData] of Object.entries(subjects)) {
@@ -442,5 +448,99 @@ export class ExamRenderer {
 
     html += `</tbody></table></div>`;
     return html;
+  }
+
+  /**
+   * 渲染試卷內嵌成績結算看板
+   * @param {object} report
+   * @param {object} examPaper
+   * @returns {string}
+   */
+  renderOnPaperScoreBanner(report, examPaper) {
+    const {
+      levelName,
+      totalEarnedScore,
+      totalPossibleScore,
+      overallAccuracyRate,
+      timeSpentSeconds = 0,
+      evaluation,
+      subjects,
+      totalCorrect = 0,
+      totalQuestions = 0
+    } = report;
+
+    const accuracyPct = Math.round(overallAccuracyRate * 100);
+    const badgeClass = evaluation.isPassed ? 'banner-passed' : 'banner-failed';
+
+    const subjectEntries = Object.entries(subjects || {});
+    let subjectsHtml = '';
+    if (subjectEntries.length > 1) {
+      subjectsHtml = `
+        <div class="report-banner-subjects">
+          <div class="banner-subjs-title">📊 各科成績明細：</div>
+          <div class="banner-subjs-grid">
+            ${subjectEntries.map(([sId, sData]) => {
+              const sAccPct = Math.round(sData.accuracyRate * 100);
+              return `
+                <div class="banner-subj-item">
+                  <div class="banner-subj-top">
+                    <span class="subj-name">${sData.subjectName}</span>
+                    <span class="subj-pts">${sData.earnedPoints} / ${sData.totalPossiblePoints} 分</span>
+                  </div>
+                  <div class="banner-subj-bottom">
+                    <span>答對 ${sData.correctCount} / ${sData.questionCount} 題</span>
+                    <span>正確率 ${sAccPct}%</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    const min = Math.floor(timeSpentSeconds / 60).toString().padStart(2, '0');
+    const sec = (timeSpentSeconds % 60).toString().padStart(2, '0');
+
+    return `
+      <div class="exam-report-banner ${badgeClass}">
+        <div class="report-banner-main">
+          <div class="banner-status-badge">
+            <span class="banner-icon">${evaluation.isPassed ? '🏆' : '📝'}</span>
+            <div class="banner-text">
+              <h3 class="banner-title">${levelName} 測驗評分成績單</h3>
+              <p class="banner-eval">${evaluation.summaryText}</p>
+              ${evaluation.nextGoalText ? `<p class="banner-next">${evaluation.nextGoalText}</p>` : ''}
+            </div>
+          </div>
+
+          <div class="banner-stats-row">
+            <div class="banner-stat-item stat-score">
+              <span class="bstat-label">總得分</span>
+              <span class="bstat-val">${totalEarnedScore} <small>/ ${totalPossibleScore}</small></span>
+            </div>
+            <div class="banner-stat-item stat-accuracy">
+              <span class="bstat-label">作答正確率</span>
+              <span class="bstat-val">${accuracyPct}% <small>(${totalCorrect}/${totalQuestions}題)</small></span>
+            </div>
+            <div class="banner-stat-item stat-time">
+              <span class="bstat-label">作答耗時</span>
+              <span class="bstat-val">${min}:${sec}</span>
+            </div>
+          </div>
+        </div>
+
+        ${subjectsHtml}
+
+        <div class="report-banner-actions">
+          <button class="btn btn-primary btn-banner-retry" id="btn-banner-retry">
+            ▶ 重新測驗
+          </button>
+          <button class="btn btn-secondary btn-banner-print" id="btn-banner-print">
+            🖨️ 列印試卷與成績
+          </button>
+        </div>
+      </div>
+    `;
   }
 }
