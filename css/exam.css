@@ -337,6 +337,29 @@
   color: var(--color-wrong);
 }
 
+.masked-cell {
+  color: var(--text-subtle);
+}
+
+.masked-num {
+  display: inline-block;
+  color: var(--text-subtle);
+  opacity: 0.45;
+  font-weight: 700;
+  letter-spacing: 2px;
+  user-select: none;
+}
+
+.masked-expr {
+  display: inline-block;
+  color: var(--text-subtle);
+  opacity: 0.45;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-family: var(--font-mono);
+  user-select: none;
+}
+
 .row-answer-input td {
   background-color: var(--bg-app);
   border-top: 2px solid var(--text-main);

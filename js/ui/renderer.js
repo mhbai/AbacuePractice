@@ -65,21 +65,8 @@ export class ExamRenderer {
         <div class="exam-sheet-body-wrapper">
     `;
 
-    // 若未開始測驗，渲染毛玻璃遮罩與提示卡片
-    if (isIdle) {
-      html += `
-        <div class="exam-idle-glass-overlay">
-          <div class="glass-prompt-card">
-            <div class="glass-icon">⏱️</div>
-            <h3 class="glass-title">測驗尚未開始</h3>
-            <p class="glass-desc">請確認上方「測驗項目」、「報考級別」與「批改模式」後，點擊開始測驗。</p>
-            <button class="btn btn-primary btn-glass-start" id="btn-overlay-start">
-              ▶ 立即開始測驗 (限時 ${Math.floor(timeLimitSeconds / 60)} 分鐘)
-            </button>
-          </div>
-        </div>
-      `;
-    } else if (isPaused) {
+    // 若暫停測驗，渲染暫停毛玻璃遮罩與操作按鈕
+    if (isPaused) {
       html += `
         <div class="exam-idle-glass-overlay exam-paused-overlay">
           <div class="glass-prompt-card">
@@ -123,11 +110,11 @@ export class ExamRenderer {
       `;
 
       if (sId === SUBJECT_TYPES.ADD_SUB) {
-        html += this.renderAddSubSection(sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled);
+        html += this.renderAddSubSection(sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled, isIdle);
       } else if (sId === SUBJECT_TYPES.CROSS_ADD_SUB) {
-        html += this.renderCrossAddSubSection(sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled);
+        html += this.renderCrossAddSubSection(sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled, isIdle);
       } else if (sId === SUBJECT_TYPES.MULTIPLICATION || sId === SUBJECT_TYPES.DIVISION) {
-        html += this.renderArithmeticSection(sId, sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled);
+        html += this.renderArithmeticSection(sId, sData, userAnswers[sId] || {}, gradedSubject, isInputDisabled, isIdle);
       }
 
       html += `</section>`;
@@ -141,7 +128,7 @@ export class ExamRenderer {
   /**
    * 渲染加減算直式縱列排版 (標準每 5 題一組)
    */
-  renderAddSubSection(subjectData, userAnsMap, gradedSubject, isInputDisabled = false) {
+  renderAddSubSection(subjectData, userAnsMap, gradedSubject, isInputDisabled = false, isIdle = false) {
     const questions = subjectData.questions || [];
     if (questions.length === 0) return '';
 
@@ -172,6 +159,9 @@ export class ExamRenderer {
             ${groupQuestions.map(q => {
               const rowItem = q.rows && q.rows[r];
               if (!rowItem) return `<td class="num-cell empty-cell">-</td>`;
+              if (isIdle) {
+                return `<td class="num-cell masked-cell"><span class="masked-num">—</span></td>`;
+              }
               const isNeg = rowItem.isNegative;
               return `<td class="num-cell ${isNeg ? 'is-negative' : ''}">${rowItem.display}</td>`;
             }).join('')}
@@ -199,8 +189,8 @@ export class ExamRenderer {
                     data-subject="${subjectData.subjectId}"
                     data-qno="${q.questionNo}"
                     data-grid-cols="${groupQuestions.length}"
-                    value="${userVal}"
-                    placeholder="輸入"
+                    value="${isIdle ? '' : userVal}"
+                    placeholder="${isIdle ? '未開始' : '輸入'}"
                     autocomplete="off"
                     ${isInputDisabled ? 'readonly disabled' : ''}
                   />
@@ -215,7 +205,7 @@ export class ExamRenderer {
             const gradedQ = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === q.questionNo) : null;
             let auditContent = '';
             let auditClass = '';
-            if (gradedQ) {
+            if (gradedQ && !isIdle) {
               if (gradedQ.isCorrect) {
                 auditContent = '✓';
                 auditClass = 'stamp-correct';
@@ -239,7 +229,7 @@ export class ExamRenderer {
   /**
    * 渲染乘算與除算題目表格 (自適應雙欄或四欄)
    */
-  renderArithmeticSection(subjectId, subjectData, userAnsMap, gradedSubject, isInputDisabled = false) {
+  renderArithmeticSection(subjectId, subjectData, userAnsMap, gradedSubject, isInputDisabled = false, isIdle = false) {
     const questions = subjectData.questions || [];
     const colCount = questions.length >= 30 ? 2 : 2; // 雙大欄排版
     const midPoint = Math.ceil(questions.length / colCount);
@@ -271,7 +261,7 @@ export class ExamRenderer {
 
         let auditContent = '';
         let auditClass = '';
-        if (gradedQ) {
+        if (gradedQ && !isIdle) {
           if (gradedQ.isCorrect) {
             auditContent = '✓';
             auditClass = 'stamp-correct';
@@ -281,10 +271,14 @@ export class ExamRenderer {
           }
         }
 
+        const exprDisplay = isIdle
+          ? `<span class="masked-expr">••••••••</span> =`
+          : `<span class="math-expr">${q.expression} =</span>`;
+
         html += `
           <tr class="arithmetic-row ${statusClass}">
             <td class="td-no">${q.questionNo}</td>
-            <td class="td-expr"><span class="math-expr">${q.expression} =</span></td>
+            <td class="td-expr">${exprDisplay}</td>
             <td class="td-ans">
               <div class="input-wrapper">
                 ${q.isCurrency ? '<span class="currency-sign">$</span>' : ''}
@@ -294,8 +288,8 @@ export class ExamRenderer {
                   class="quiz-answer-input"
                   data-subject="${subjectId}"
                   data-qno="${q.questionNo}"
-                  value="${userVal}"
-                  placeholder="輸入答案"
+                  value="${isIdle ? '' : userVal}"
+                  placeholder="${isIdle ? '未開始' : '輸入答案'}"
                   autocomplete="off"
                   ${isInputDisabled ? 'readonly disabled' : ''}
                 />
@@ -318,7 +312,7 @@ export class ExamRenderer {
   /**
    * 渲染縱橫列計算表格 (4 縱列 × 5 橫列 = 9 題)
    */
-  renderCrossAddSubSection(subjectData, userAnsMap, gradedSubject, isInputDisabled = false) {
+  renderCrossAddSubSection(subjectData, userAnsMap, gradedSubject, isInputDisabled = false, isIdle = false) {
     const matrix = subjectData.matrix || [];
     const rows = subjectData.rows || (matrix.length || 5);
     const cols = subjectData.cols || (matrix[0] ? matrix[0].length : 4);
@@ -351,7 +345,7 @@ export class ExamRenderer {
 
       let auditContentRow = '';
       let auditClassRow = '';
-      if (gradedQRow) {
+      if (gradedQRow && !isIdle) {
         if (gradedQRow.isCorrect) {
           auditContentRow = '✓';
           auditClassRow = 'stamp-correct';
@@ -367,6 +361,9 @@ export class ExamRenderer {
           ${Array.from({ length: cols }).map((_, c) => {
             const cell = matrix[r] && matrix[r][c];
             if (!cell) return `<td class="td-cross-cell">-</td>`;
+            if (isIdle) {
+              return `<td class="td-cross-cell masked-cell"><span class="masked-num">—</span></td>`;
+            }
             return `<td class="td-cross-cell ${cell.isNegative ? 'is-negative' : ''}">${cell.display}</td>`;
           }).join('')}
           <td class="td-cross-ans ${statusClassRow}">
@@ -378,8 +375,8 @@ export class ExamRenderer {
                 data-subject="${subjectData.subjectId}"
                 data-qno="${qNoRow}"
                 data-grid-cols="${cols + 1}"
-                value="${userValRow}"
-                placeholder="橫計"
+                value="${isIdle ? '' : userValRow}"
+                placeholder="${isIdle ? '未開始' : '橫計'}"
                 autocomplete="off"
                 ${isInputDisabled ? 'readonly disabled' : ''}
               />
@@ -412,8 +409,8 @@ export class ExamRenderer {
                   data-subject="${subjectData.subjectId}"
                   data-qno="${qNoCol}"
                   data-grid-cols="${cols}"
-                  value="${userValCol}"
-                  placeholder="縱計"
+                  value="${isIdle ? '' : userValCol}"
+                  placeholder="${isIdle ? '未開始' : '縱計'}"
                   autocomplete="off"
                   ${isInputDisabled ? 'readonly disabled' : ''}
                 />
@@ -431,7 +428,7 @@ export class ExamRenderer {
           const gradedQCol = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === qNoCol) : null;
           let auditContentCol = '';
           let auditClassCol = '';
-          if (gradedQCol) {
+          if (gradedQCol && !isIdle) {
             if (gradedQCol.isCorrect) {
               auditContentCol = '✓';
               auditClassCol = 'stamp-correct';
