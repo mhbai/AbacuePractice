@@ -108,13 +108,27 @@ async function runTests() {
           }
         }
 
-        // 驗證縱橫列計算
+        // 驗證縱橫列計算 (4 縱列 + 5 橫列 + 1 全表總計 = 10 題)
         const cross = paper.subjects.CROSS_ADD_SUB;
         if (cross) {
+          if (cross.questions.length !== 10) {
+            throw new Error(`縱橫列計算題數不符！應為 10 題，實為 ${cross.questions.length} 題 (${type}/${lvl.levelId})`);
+          }
+          let calculatedColSum = 0;
+          let calculatedRowSum = 0;
           for (const q of cross.questions) {
             totalQuestions++;
             if (isNaN(q.standardAnswer)) {
               throw new Error(`縱橫列計算標準答案異常: ${q.label}`);
+            }
+            if (q.targetType === 'col') {
+              calculatedColSum += q.standardAnswer;
+            } else if (q.targetType === 'row') {
+              calculatedRowSum += q.standardAnswer;
+            } else if (q.targetType === 'grand_total') {
+              if (q.standardAnswer !== calculatedColSum || q.standardAnswer !== calculatedRowSum) {
+                throw new Error(`全表總計（第10題）與縱列/橫列加總不一致！${type}/${lvl.levelId}: 總計=${q.standardAnswer}, 縱列和=${calculatedColSum}, 橫列和=${calculatedRowSum}`);
+              }
             }
           }
         }

@@ -882,7 +882,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: true,
             subtractionRatio: 0.25,
@@ -957,7 +957,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: true,
             subtractionRatio: 0.25,
@@ -1032,7 +1032,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: true,
             subtractionRatio: 0.25,
@@ -1107,7 +1107,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: true,
             subtractionRatio: 0.25,
@@ -1182,7 +1182,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: true,
             subtractionRatio: 0.25,
@@ -1255,7 +1255,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: true,
             subtractionRatio: 0.25,
@@ -1328,7 +1328,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: true,
             subtractionRatio: 0.25,
@@ -1401,7 +1401,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: true,
             subtractionRatio: 0.25,
@@ -1473,7 +1473,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.25,
@@ -1544,7 +1544,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.25,
@@ -1589,7 +1589,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.25,
@@ -1634,7 +1634,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.25,
@@ -1679,7 +1679,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.25,
@@ -1724,7 +1724,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             hasDecimals: false,
             hasCurrency: false,
             subtractionRatio: 0.25,
@@ -1771,7 +1771,7 @@ const ABACUS_CONFIG = {
           totalPoints: 50,
           spec: {
             rows: 5,
-            cols: 5,
+            cols: 4,
             directBeadsOnly: true,
             hasDecimals: false,
             hasCurrency: false,

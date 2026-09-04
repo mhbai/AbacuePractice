@@ -671,14 +671,14 @@ export function generateDivisionQuestion(spec, questionNo, totalQuestions) {
  */
 /**
  * 縱橫列計算題目生成器 (Cross Addition/Subtraction Generator)
- * 產生 5 橫列 × 5 縱列 之矩陣，計算 5 縱列合計 + 5 橫列合計 (共 10 題)
+ * 產生 5 橫列 × 4 縱列 之矩陣，計算 4 縱列合計 + 5 橫列合計 + 1 橫列總計（全表總和） (共 10 題)
  * @param {object} spec
  * @returns {object} 回傳 matrix, rows, cols, questions
  */
 export function generateCrossAddSubQuestions(spec) {
   const {
     rows = 5,
-    cols = 5,
+    cols = 4,
     subtractionRatio = 0.25,
     hasCurrency = false,
     directBeadsOnly = false,
@@ -697,6 +697,10 @@ export function generateCrossAddSubQuestions(spec) {
       const minVal = dist.minVal || (dist.minDigits === 1 ? 1 : Math.pow(10, dist.minDigits - 1));
       const maxVal = dist.maxVal || Math.pow(10, dist.maxDigits) - 1;
       let val = getRandomInt(minVal, maxVal);
+
+      if (directBeadsOnly) {
+        val = getRandomInt(1, Math.min(4, maxVal));
+      }
 
       const canSub = r > 0 && subtractionRatio > 0 && Math.random() < subtractionRatio;
       if (canSub && colRunningSum - val > 0) {
@@ -717,7 +721,7 @@ export function generateCrossAddSubQuestions(spec) {
     }
   }
 
-  // 5 個縱列合計 (Q1 ~ Q5)
+  // 4 個縱列合計 (Q1 ~ Q4)
   const colSums = [];
   for (let c = 0; c < cols; c++) {
     let sum = 0;
@@ -727,7 +731,7 @@ export function generateCrossAddSubQuestions(spec) {
     colSums.push(sum);
   }
 
-  // 5 個橫列合計 (Q6 ~ Q10)
+  // 5 個橫列合計 (Q5 ~ Q9)
   const rowSums = [];
   for (let r = 0; r < rows; r++) {
     let sum = 0;
@@ -737,10 +741,13 @@ export function generateCrossAddSubQuestions(spec) {
     rowSums.push(sum);
   }
 
+  // 橫列總計（全表總和 / 縱列總計之值）(Q10)
+  const grandTotal = colSums.reduce((acc, v) => acc + v, 0);
+
   const questions = [];
   const colLabels = ['一', '二', '三', '四', '五'];
 
-  // Q1 ~ Q5: 縱列合計
+  // Q1 ~ Q4: 縱列合計
   for (let c = 0; c < cols; c++) {
     const qNo = c + 1;
     questions.push({
@@ -756,7 +763,7 @@ export function generateCrossAddSubQuestions(spec) {
     });
   }
 
-  // Q6 ~ Q10: 橫列合計
+  // Q5 ~ Q9: 橫列合計
   for (let r = 0; r < rows; r++) {
     const qNo = cols + r + 1;
     questions.push({
@@ -771,6 +778,20 @@ export function generateCrossAddSubQuestions(spec) {
       answerFormatted: formatNumber(rowSums[r], { hasCurrency, decimalPlaces: 0 })
     });
   }
+
+  // Q10: 橫列總計 (全表總計)
+  const qNoTotal = cols + rows + 1; // 4 + 5 + 1 = 10
+  questions.push({
+    id: `cross_total`,
+    questionNo: qNoTotal,
+    type: SUBJECT_TYPES.CROSS_ADD_SUB,
+    targetType: 'grand_total',
+    targetIndex: -1,
+    label: `橫列總計（全表總和）`,
+    matrix,
+    standardAnswer: grandTotal,
+    answerFormatted: formatNumber(grandTotal, { hasCurrency, decimalPlaces: 0 })
+  });
 
   return { matrix, rows, cols, questions };
 }

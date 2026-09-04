@@ -310,7 +310,7 @@ export class ExamRenderer {
   }
 
   /**
-   * 渲染縱橫列計算表格 (4 縱列 × 5 橫列 = 9 題)
+   * 渲染縱橫列計算表格 (4 縱列 × 5 橫列 + 1 全表總計 = 10 題)
    */
   renderCrossAddSubSection(subjectData, userAnsMap, gradedSubject, isInputDisabled = false, isIdle = false) {
     const matrix = subjectData.matrix || [];
@@ -334,7 +334,7 @@ export class ExamRenderer {
           <tbody>
     `;
 
-    // 渲染各橫列數字與右側橫列合計輸入框
+    // 渲染各橫列數字與右側橫列合計輸入框 (Q5 ~ Q9)
     for (let r = 0; r < rows; r++) {
       // 橫列合計題目編號: cols + r + 1
       const qNoRow = cols + r + 1;
@@ -389,7 +389,26 @@ export class ExamRenderer {
       `;
     }
 
-    // 渲染底部縱列合計列
+    // 第 10 題：橫列總計（全表總和）
+    const qNoTotal = cols + rows + 1;
+    const qTotal = questions.find(q => q.questionNo === qNoTotal);
+    const userValTotal = userAnsMap[qNoTotal] || '';
+    const gradedQTotal = gradedSubject ? gradedSubject.questions.find(item => item.questionNo === qNoTotal) : null;
+    const statusClassTotal = gradedQTotal ? (gradedQTotal.isCorrect ? 'ans-correct' : 'ans-incorrect') : '';
+
+    let auditContentTotal = '';
+    let auditClassTotal = '';
+    if (gradedQTotal && !isIdle) {
+      if (gradedQTotal.isCorrect) {
+        auditContentTotal = '✓';
+        auditClassTotal = 'stamp-correct';
+      } else {
+        auditContentTotal = `<span class="audit-mark">✗</span><span class="audit-ans">${qTotal ? qTotal.answerFormatted : ''}</span>`;
+        auditClassTotal = 'stamp-wrong';
+      }
+    }
+
+    // 渲染底部縱列合計列 (Q1 ~ Q4 及右下角 Q10 橫列總計)
     html += `
       <tr class="cross-col-sum-row">
         <td class="td-cross-label">縱列<br>合計</td>
@@ -408,7 +427,7 @@ export class ExamRenderer {
                   class="quiz-answer-input"
                   data-subject="${subjectData.subjectId}"
                   data-qno="${qNoCol}"
-                  data-grid-cols="${cols}"
+                  data-grid-cols="${cols + 1}"
                   value="${isIdle ? '' : userValCol}"
                   placeholder="${isIdle ? '未開始' : '縱計'}"
                   autocomplete="off"
@@ -418,7 +437,25 @@ export class ExamRenderer {
             </td>
           `;
         }).join('')}
-        <td class="td-cross-blank" colspan="2"></td>
+        <td class="td-cross-ans td-cross-grand-total ${statusClassTotal}">
+          <div class="input-wrapper">
+            <input
+              type="text"
+              inputmode="decimal"
+              class="quiz-answer-input"
+              data-subject="${subjectData.subjectId}"
+              data-qno="${qNoTotal}"
+              data-grid-cols="${cols + 1}"
+              value="${isIdle ? '' : userValTotal}"
+              placeholder="${isIdle ? '未開始' : '總計'}"
+              autocomplete="off"
+              ${isInputDisabled ? 'readonly disabled' : ''}
+            />
+          </div>
+        </td>
+        <td class="td-audit ${auditClassTotal}" data-subject="${subjectData.subjectId}" data-audit-qno="${qNoTotal}">
+          ${auditContentTotal}
+        </td>
       </tr>
       <tr class="row-stamp-row cross-audit-row">
         <td class="row-stamp-label">審查</td>
