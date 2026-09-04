@@ -220,20 +220,153 @@ export function generateDirectBeadsQuestion(spec, questionNo) {
  * @param {number} questionNo
  * @returns {object}
  */
+/**
+ * 十二級專用：10組合不含混合型加6/7/8/9口訣，且第1、2口為無口訣
+ */
+export function generateClass12MentalQuestion(spec, questionNo) {
+  const { hasCurrency = false } = spec;
+  const lastAddCandidates = [6, 7, 8, 9];
+
+  for (let attempt = 0; attempt < 200; attempt++) {
+    // 1. 生成第 1 口與第 2 口 (純直加無口訣)
+    const d1 = getRandomInt(1, 4);
+    const d2Candidates = getValidDirectAddCandidates(d1);
+    if (d2Candidates.length === 0) continue;
+    const d2 = getRandomChoice(d2Candidates);
+    const sum2 = d1 + d2; // 2 ~ 9
+
+    // 2. 生成第 3 口 (加 6, 7, 8, 9，且與 sum2 形成純十補數進位)
+    const validD3 = lastAddCandidates.filter(d => {
+      // 必須進位: sum2 + d >= 10
+      if (sum2 + d < 10) return false;
+      // 單純10補數 (不含湊五混合型):
+      // 加6需減4 (下珠夠減4): (sum2 % 5) >= 4 或 sum2 >= 4
+      // 加7需減3 (下珠夠減3): (sum2 % 5) >= 3
+      // 加8需減2 (下珠夠減2): (sum2 % 5) >= 2
+      // 加9需減1 (下珠夠減1): (sum2 % 5) >= 1
+      const complement = 10 - d;
+      return (sum2 % 5) >= complement || (sum2 % 10) >= complement;
+    });
+
+    if (validD3.length === 0) continue;
+    const d3 = getRandomChoice(validD3);
+    const finalAnswer = sum2 + d3;
+
+    const numbers = [
+      { rawVal: d1, isNegative: false, display: formatNumber(d1, { hasCurrency, decimalPlaces: 0 }) },
+      { rawVal: d2, isNegative: false, display: formatNumber(d2, { hasCurrency: false, decimalPlaces: 0 }) },
+      { rawVal: d3, isNegative: false, display: formatNumber(d3, { hasCurrency: false, decimalPlaces: 0 }) }
+    ];
+
+    return {
+      id: `addsub_${questionNo}`,
+      questionNo,
+      type: SUBJECT_TYPES.ADD_SUB,
+      rows: numbers,
+      hasCurrency,
+      hasDecimals: false,
+      decimalPlaces: 0,
+      standardAnswer: finalAnswer,
+      answerFormatted: formatNumber(finalAnswer, { hasCurrency, decimalPlaces: 0 }),
+      spec
+    };
+  }
+
+  return generateDirectBeadsQuestion(spec, questionNo);
+}
+
+/**
+ * 十一級專用：5組合及不含混合型之10組合全部口訣
+ */
+export function generateClass11MentalQuestion(spec, questionNo) {
+  const { hasCurrency = false } = spec;
+
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const numbers = [];
+    let runningSum = 0;
+    let hasCombo = false;
+
+    for (let r = 0; r < 3; r++) {
+      const d = getRandomInt(1, 9);
+      if (r > 0) {
+        const curL = runningSum % 5;
+        const curU = Math.floor(runningSum / 5);
+        const addL = d % 5;
+        const addU = Math.floor(d / 5);
+        // 檢查是否為湊五 (5組合) 或進位 (10組合)
+        if (curL + addL > 4 || runningSum + d >= 10) {
+          hasCombo = true;
+        }
+      }
+      runningSum += d;
+      numbers.push({
+        rawVal: d,
+        isNegative: false,
+        display: formatNumber(d, { hasCurrency: r === 0 && hasCurrency, decimalPlaces: 0 })
+      });
+    }
+
+    if (hasCombo) {
+      return {
+        id: `addsub_${questionNo}`,
+        questionNo,
+        type: SUBJECT_TYPES.ADD_SUB,
+        rows: numbers,
+        hasCurrency,
+        hasDecimals: false,
+        decimalPlaces: 0,
+        standardAnswer: runningSum,
+        answerFormatted: formatNumber(runningSum, { hasCurrency, decimalPlaces: 0 }),
+        spec
+      };
+    }
+  }
+
+  return generateDirectBeadsQuestion(spec, questionNo);
+}
+
+/**
+ * 加減算題目生成器 (支援非負累計約束)
+ * @param {object} spec
+ * @param {number} questionNo
+ * @returns {object}
+ */
 export function generateAddSubQuestion(spec, questionNo) {
   if (spec.directBeadsOnly || spec.noCarry) {
     return generateDirectBeadsQuestion(spec, questionNo);
   }
 
+  if (spec.specialCarryMode === '10_COMBINATIONS_NO_MIX_LAST6789') {
+    return generateClass12MentalQuestion(spec, questionNo);
+  }
+
+  if (spec.specialCarryMode === '5_AND_10_COMBINATIONS') {
+    return generateClass11MentalQuestion(spec, questionNo);
+  }
+
+  // 支援 rowPatterns (如五級~八級之心算題型分配)
+  let effectiveRows = spec.rows || 10;
+  let effectiveDistribution = spec.digitDistribution || [{ minDigits: 2, maxDigits: 3, weight: 1.0 }];
+
+  if (spec.rowPatterns && spec.rowPatterns.length > 0) {
+    let cumulative = 0;
+    for (const p of spec.rowPatterns) {
+      cumulative += p.count || 1;
+      if (questionNo <= cumulative) {
+        if (p.rows) effectiveRows = p.rows;
+        if (p.digitDistribution) effectiveDistribution = p.digitDistribution;
+        break;
+      }
+    }
+  }
+
   const {
-    rows = 10,
     hasDecimals = false,
     decimalPlaces = 2,
     hasCurrency = false,
     subtractionRatio = 0.3,
     requireCarry = false,
-    minSum = null,
-    digitDistribution = [{ minDigits: 2, maxDigits: 3, weight: 1.0 }]
+    minSum = null
   } = spec;
 
   const maxAttempts = requireCarry ? 150 : 1;
@@ -243,9 +376,8 @@ export function generateAddSubQuestion(spec, questionNo) {
     let runningSum = 0;
     let hasCarryOccurred = false;
 
-    for (let r = 0; r < rows; r++) {
-      // 依權重決定本筆位數
-      const dist = getRandomChoice(digitDistribution);
+    for (let r = 0; r < effectiveRows; r++) {
+      const dist = getRandomChoice(effectiveDistribution);
       const digits = getRandomInt(dist.minDigits, dist.maxDigits);
       const minVal = dist.minVal || null;
       const maxVal = dist.maxVal || null;
@@ -253,18 +385,14 @@ export function generateAddSubQuestion(spec, questionNo) {
       let baseVal = getRandomIntWithDigits(digits, minVal, maxVal);
 
       if (hasDecimals) {
-        // 產生帶小數的數字 (例如小數點後 2 位)
         const decimalFactor = Math.pow(10, decimalPlaces);
         baseVal = baseVal / decimalFactor;
-        // 確保不是純 0
         if (baseVal === 0) baseVal = 1 / decimalFactor;
       }
 
-      // 決定是否為減法 (第 1 筆永遠為正數)
       const canSubtract = r > 0 && subtractionRatio > 0 && Math.random() < subtractionRatio;
 
       if (canSubtract) {
-        // 非負約束：減數必須嚴格小於當前累計總和 (runningSum - baseVal > 0)
         if (baseVal >= runningSum) {
           if (hasDecimals) {
             const maxAllowed = roundToDecimals(runningSum * (0.3 + Math.random() * 0.5), decimalPlaces);
@@ -275,7 +403,6 @@ export function generateAddSubQuestion(spec, questionNo) {
           }
         }
 
-        // 雙重保證：累計必大於 0
         if (runningSum - baseVal <= 0) {
           if (r > 0 && ((runningSum % 10) + (baseVal % 10) >= 10 || (runningSum + baseVal) >= 10)) {
             hasCarryOccurred = true;
@@ -295,7 +422,6 @@ export function generateAddSubQuestion(spec, questionNo) {
           });
         }
       } else {
-        // 加法
         if (r > 0 && ((runningSum % 10) + (baseVal % 10) >= 10 || (runningSum + baseVal) >= 10)) {
           hasCarryOccurred = true;
         }
@@ -317,7 +443,6 @@ export function generateAddSubQuestion(spec, questionNo) {
       }
     }
 
-    // 計算標準答案
     const finalAnswer = runningSum;
     const answerFormatted = formatNumber(finalAnswer, { hasCurrency, decimalPlaces: hasDecimals ? decimalPlaces : 0 });
 
@@ -544,27 +669,33 @@ export function generateDivisionQuestion(spec, questionNo, totalQuestions) {
  * @param {object} spec
  * @returns {object[]} 回傳 9 個題目項目
  */
+/**
+ * 縱橫列計算題目生成器 (Cross Addition/Subtraction Generator)
+ * 產生 5 橫列 × 5 縱列 之矩陣，計算 5 縱列合計 + 5 橫列合計 (共 10 題)
+ * @param {object} spec
+ * @returns {object} 回傳 matrix, rows, cols, questions
+ */
 export function generateCrossAddSubQuestions(spec) {
   const {
     rows = 5,
-    cols = 4,
+    cols = 5,
     subtractionRatio = 0.25,
+    hasCurrency = false,
+    directBeadsOnly = false,
     digitDistribution = [{ minDigits: 1, maxDigits: 1, minVal: 1, maxVal: 9, weight: 1.0 }]
   } = spec;
 
-  // 1. 建立 matrix[rows][cols]
   const matrix = [];
   for (let r = 0; r < rows; r++) {
     matrix[r] = [];
   }
 
-  // 2. 逐欄生成數字，確保每一縱列之累計總和在每一步驟均 > 0
   for (let c = 0; c < cols; c++) {
     let colRunningSum = 0;
     for (let r = 0; r < rows; r++) {
       const dist = getRandomChoice(digitDistribution);
-      const minVal = dist.minVal || 1;
-      const maxVal = dist.maxVal || 9;
+      const minVal = dist.minVal || (dist.minDigits === 1 ? 1 : Math.pow(10, dist.minDigits - 1));
+      const maxVal = dist.maxVal || Math.pow(10, dist.maxDigits) - 1;
       let val = getRandomInt(minVal, maxVal);
 
       const canSub = r > 0 && subtractionRatio > 0 && Math.random() < subtractionRatio;
@@ -579,14 +710,14 @@ export function generateCrossAddSubQuestions(spec) {
         colRunningSum += val;
         matrix[r][c] = {
           rawVal: val,
-          display: `${val}`,
+          display: formatNumber(val, { hasCurrency: r === 0 && hasCurrency, decimalPlaces: 0 }),
           isNegative: false
         };
       }
     }
   }
 
-  // 3. 計算 4 個縱列合計
+  // 5 個縱列合計 (Q1 ~ Q5)
   const colSums = [];
   for (let c = 0; c < cols; c++) {
     let sum = 0;
@@ -596,7 +727,7 @@ export function generateCrossAddSubQuestions(spec) {
     colSums.push(sum);
   }
 
-  // 4. 計算 5 個橫列合計
+  // 5 個橫列合計 (Q6 ~ Q10)
   const rowSums = [];
   for (let r = 0; r < rows; r++) {
     let sum = 0;
@@ -606,11 +737,10 @@ export function generateCrossAddSubQuestions(spec) {
     rowSums.push(sum);
   }
 
-  // 5. 組合 9 道作答題目
   const questions = [];
   const colLabels = ['一', '二', '三', '四', '五'];
 
-  // Q1 ~ Q4: 縱列合計
+  // Q1 ~ Q5: 縱列合計
   for (let c = 0; c < cols; c++) {
     const qNo = c + 1;
     questions.push({
@@ -622,11 +752,11 @@ export function generateCrossAddSubQuestions(spec) {
       label: `縱列【${colLabels[c] || c + 1}】合計`,
       matrix,
       standardAnswer: colSums[c],
-      answerFormatted: String(colSums[c])
+      answerFormatted: formatNumber(colSums[c], { hasCurrency, decimalPlaces: 0 })
     });
   }
 
-  // Q5 ~ Q9: 橫列合計
+  // Q6 ~ Q10: 橫列合計
   for (let r = 0; r < rows; r++) {
     const qNo = cols + r + 1;
     questions.push({
@@ -638,7 +768,7 @@ export function generateCrossAddSubQuestions(spec) {
       label: `橫列【第 ${r + 1} 行】合計`,
       matrix,
       standardAnswer: rowSums[r],
-      answerFormatted: String(rowSums[r])
+      answerFormatted: formatNumber(rowSums[r], { hasCurrency, decimalPlaces: 0 })
     });
   }
 

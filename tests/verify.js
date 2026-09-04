@@ -144,15 +144,16 @@ async function runTests() {
   }
   console.log('  ✓ 答案容錯標準化（$ 貨幣符號、千分位逗號、空白、括號負數）驗證通過！');
 
-  // 3.2 測試段位認定
+  // 3.2 測試段位認定 (初段:80, 二段:90, 三段:100, 四段:110, 五段:120, 六段:130, 七段:140, 八段:160, 九段:180, 十段:200)
   const danScale = QUIZ_CONFIG[EXAM_TYPES.MENTAL].levels.degree.passCriteria.danRankScale;
   const d0 = grader.evaluateDanRank(60, danScale);
   const d1 = grader.evaluateDanRank(80, danScale);
-  const d4 = grader.evaluateDanRank(145, danScale);
-  const d10 = grader.evaluateDanRank(260, danScale);
+  const d4 = grader.evaluateDanRank(115, danScale); // 110~119 -> 四段
+  const d7 = grader.evaluateDanRank(145, danScale); // 140~159 -> 七段
+  const d10 = grader.evaluateDanRank(200, danScale); // 200+ -> 十段
 
-  if (d0.passed || d1.rank !== '初段' || d4.rank !== '四段' || d10.rank !== '十段') {
-    throw new Error('段位評定邏輯異常: ' + JSON.stringify({ d0, d1, d4, d10 }));
+  if (d0.passed || d1.rank !== '初段' || d4.rank !== '四段' || d7.rank !== '七段' || d10.rank !== '十段') {
+    throw new Error('段位評定邏輯異常: ' + JSON.stringify({ d0, d1, d4, d7, d10 }));
   }
   console.log('  ✓ 段位評定標準（初段 ~ 十段）計算完全正確！');
 
